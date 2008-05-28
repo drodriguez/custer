@@ -1,9 +1,17 @@
 env = Environment()
 
 env.Append(ENV = {'PATH' : "%s:/opt/local/bin" % env['ENV']['PATH']})
+env.Append(CCFLAGS = '-I/opt/local/include')
 
 ragel = Builder(action = 'ragel -C -o ${TARGET.abspath} ${SOURCE.file}', chdir=1)
 env.Append(BUILDERS = {'Ragel' : ragel})
 
 env.Ragel('http/parser.c', ['http/parser.rl', 'http/common.rl'])
-Program(['test_parser.c', 'http/parser.c'])
+
+objects = Split("""
+	Dispatcher.cpp
+	KQueueDispatcher.cpp
+	http/parser.c
+""")
+
+env.Object(objects)
