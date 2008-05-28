@@ -1,0 +1,9 @@
+env = Environment()
+
+env.Append(ENV = {'PATH' : "%s:/opt/local/bin" % env['ENV']['PATH']})
+
+ragel = Builder(action = 'ragel -C -o ${TARGET.abspath} ${SOURCE.file}', chdir=1)
+env.Append(BUILDERS = {'Ragel' : ragel})
+
+env.Ragel('http/parser.c', ['http/parser.rl', 'http/common.rl'])
+Program(['test_parser.c', 'http/parser.c'])
