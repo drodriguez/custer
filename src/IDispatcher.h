@@ -13,6 +13,7 @@ NS_CUSTER_BEGIN
  * realizar aritmética de bits con ellos.
  */
 enum EventType {
+	NO_EVENT   = 0,
 	ACCEPT_EVENT = 1 << 0,
 	READ_EVENT   = 1 << 1,
 	WRITE_EVENT  = 1 << 2,

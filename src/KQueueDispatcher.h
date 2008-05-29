@@ -41,7 +41,7 @@ private:
 		EventHandler*,
 		std::pair<
 			boost::shared_ptr<EventHandler>,
-			int
+			EventType
 		>
 	> m_eventHandlersMap;
 	

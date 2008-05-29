@@ -8,10 +8,10 @@ env.Append(BUILDERS = {'Ragel' : ragel})
 
 env.Ragel('http/parser.c', ['http/parser.rl', 'http/common.rl'])
 
-objects = Split("""
+sources = Split("""
 	Dispatcher.cpp
 	KQueueDispatcher.cpp
 	http/parser.c
 """)
 
-env.Object(objects)
+objects = env.Object(sources)

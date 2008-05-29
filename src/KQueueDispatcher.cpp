@@ -8,6 +8,24 @@
 
 using namespace custer;
 
+/**
+ * Traduce nuestros eventos a los posibles eventos disponibles en KQueue.
+ *
+ * @param et Los eventos a capturar.
+ * @return Los eventos equivalentes en KQueue.
+ */
+int translateEvents(EventType et) {
+	int result = 0;
+	
+	if (et == NO_EVENT)    return 0;
+	if (et & ACCEPT_EVENT) result &= EVFILT_READ;
+	if (et & READ_EVENT)   result &= EVFILT_READ;
+	if (et & WRITE_EVENT)  result &= EVFILT_WRITE;
+	if (et & CLOSE_EVENT)  result &= EVFILT_WRITE;
+	
+	return result;
+}
+
 KQueueDispatcher::KQueueDispatcher() :
 	m_eventHandlersMap(),
 	m_keventArraySize(64), // Inicialmente suponemos 64 descriptores
@@ -30,6 +48,9 @@ KQueueDispatcher::~KQueueDispatcher()
 void KQueueDispatcher::registerHandler
 	(boost::shared_ptr<EventHandler> eh, EventType et)
 {
+	// Si no se piden eventos no lo añadimos.
+	if (et == NO_EVENT) return;
+	
 	// Si el vector de kevents está lleno...
 	if (m_keventArrayUsed == m_keventArraySize) {
 		m_keventArraySize <<= 1; // ...doblamos su capacidad.
@@ -43,8 +64,7 @@ void KQueueDispatcher::registerHandler
 	
 	// y lo rellenamos
 	// FIXME: newKevent->ident = eh->getHandle();
-	newKevent->filter =
-		et & (ACCEPT_EVENT | READ_EVENT) ? EVFILT_READ : EVFILT_WRITE;	
+	newKevent->filter = translateEvents(et);	
 	newKevent->flags = EV_ADD;
 	newKevent->fflags = 0;
 	newKevent->data = 0;
@@ -56,7 +76,37 @@ void KQueueDispatcher::registerHandler
 void KQueueDispatcher::removeHandler
 	(boost::shared_ptr<EventHandler> eh, EventType et)
 {
-	// TODO
+	std::pair<boost::shared_ptr<EventHandler>, EventType> ehp =
+		m_eventHandlersMap[(EventHandler*) eh.get()];
+	
+	// Primero borramos por completo el antiguo
+	struct kevent* oldKevent = &m_keventArray[m_keventArrayUsed++];
+	// FIX: oldKevent->ident = ehp.first->getHandle();
+	oldKevent->filter = 0;
+	oldKevent->flags = EV_DELETE;
+	oldKevent->fflags = 0;
+	oldKevent->data = 0;
+	oldKevent->udata = NULL;
+	
+	// Calculamos el resultado de los eventos antiguos y los nuevos
+	EventType newEventTypes =  static_cast<EventType>(ehp.second & !et);
+	
+	// Si el resultado acaba siendo ningún evento, eliminados el EventHandler
+	if (newEventTypes == NO_EVENT) {
+		m_eventHandlersMap.erase(eh.get());
+		return;
+	}
+	
+	// Añadimos un nuevo kevent
+	struct kevent* newKevent = &m_keventArray[m_keventArrayUsed++];
+	// FIX: newKevent->ident = eh->getHandle();
+	newKevent->filter = translateEvents(newEventTypes);
+	newKevent->flags = EV_ADD;
+	newKevent->fflags = 0;
+	newKevent->data = 0;
+	newKevent->udata = eh.get();
+	
+	m_eventHandlersMap[eh.get()] = std::make_pair(eh, newEventTypes);
 }
 
 void KQueueDispatcher::handleEvents(long timeout)
@@ -81,7 +131,7 @@ void KQueueDispatcher::handleEvents(long timeout)
 	for (activeKevent = m_keventArray;
 		activeKevent < &m_keventArray[numEvents];
 		activeKevent++) {
-		std::pair<boost::shared_ptr<EventHandler>, int> ehp =
+		std::pair<boost::shared_ptr<EventHandler>, EventType> ehp =
 			m_eventHandlersMap[(EventHandler*) activeKevent->udata];
 		// TODO: enviar el evento correcto
 	}
