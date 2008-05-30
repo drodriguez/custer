@@ -63,7 +63,7 @@ void KQueueDispatcher::registerHandler
 	struct kevent* newKevent = &m_keventArray[m_keventArrayUsed++];
 	
 	// y lo rellenamos
-	// FIXME: newKevent->ident = eh->getHandle();
+	newKevent->ident = eh->getHandle();
 	newKevent->filter = translateEvents(et);	
 	newKevent->flags = EV_ADD;
 	newKevent->fflags = 0;
@@ -81,7 +81,7 @@ void KQueueDispatcher::removeHandler
 	
 	// Primero borramos por completo el antiguo
 	struct kevent* oldKevent = &m_keventArray[m_keventArrayUsed++];
-	// FIX: oldKevent->ident = ehp.first->getHandle();
+	oldKevent->ident = ehp.first->getHandle();
 	oldKevent->filter = 0;
 	oldKevent->flags = EV_DELETE;
 	oldKevent->fflags = 0;
@@ -99,7 +99,7 @@ void KQueueDispatcher::removeHandler
 	
 	// Añadimos un nuevo kevent
 	struct kevent* newKevent = &m_keventArray[m_keventArrayUsed++];
-	// FIX: newKevent->ident = eh->getHandle();
+	newKevent->ident = eh->getHandle();
 	newKevent->filter = translateEvents(newEventTypes);
 	newKevent->flags = EV_ADD;
 	newKevent->fflags = 0;
@@ -113,6 +113,15 @@ void KQueueDispatcher::handleEvents(long timeout)
 {
 	int numEvents;
 	struct kevent* activeKevent;
+	struct timespec keventTimeout;
+	
+	if (timeout != -1) {
+		long secs = timeout / 1000;
+		long msecs = timeout % 1000;
+		
+		keventTimeout.tv_sec = secs;
+		keventTimeout.tv_nsec = msecs * 1000000;
+	}
 	
 	numEvents = kevent(
 		m_kqueue,
@@ -120,7 +129,7 @@ void KQueueDispatcher::handleEvents(long timeout)
 		m_keventArrayUsed,
 		m_keventArray,
 		m_keventArraySize,
-		NULL // FIXME: Calcular correctamente el timeout
+		timeout != -1 ? &keventTimeout : NULL
 	);
 	
 	if (numEvents == -1)

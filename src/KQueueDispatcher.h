@@ -3,12 +3,10 @@
 
 #include "custer.h"
 #include "IDispatcher.h"
-#include "EventHandler.h"
 
 #include <boost/shared_ptr.hpp>
 
 #include <map>
-#include <sys/event.h>
 
 NS_CUSTER_BEGIN
 
@@ -18,7 +16,7 @@ NS_CUSTER_BEGIN
  */
 class KQueueDispatcher : public IDispatcher
 {
-public:
+public:	
 	/** Constructor */
 	KQueueDispatcher();
 	
@@ -57,6 +55,8 @@ private:
 	/** Descriptor del kqueue */
 	int m_kqueue;
 };
+
+typedef KQueueDispatcher NativeDispatcher;
 
 NS_CUSTER_END
 

@@ -2,21 +2,23 @@
 #define PLATFORM_H
 
 #if defined(__APPLE__)
-#  define NATIVE_DISPATCHER KQueueDispatcher
+#  include <sys/event.h>
+	typedef int socket_type;
 #  include "KQueueDispatcher.h"
 #elif defined(__BSD__)
-#  define NATIVE_DISPATCHER KQueueDispatcher
+#  include <sys/event.h>
+	typedef int socket_type;
 #  include "KQueueDispatcher.h"
 #elif defined(WIN32)
-#  define NATIVE_DISPATCHER SelectDispatcher
+#  include <winsock2.h>
+	typedef SOCKET socket_type;
 #  include "SelectDispatcher.h"
 #elif defined(__linux__)
-#  define NATIVE_DISPATCHER PollDispatcher
-#  include "PollDispatcher.h"
+#  include <sys/poll.h>
+	typedef int socket_type;
+#  include "EpollDispatcher.h"
 #else
 #  error "No hay dispatcher asociado a esta plataforma"
 #endif
-
-#define NativeDispatcher NATIVE_DISPATCHER
 
 #endif
