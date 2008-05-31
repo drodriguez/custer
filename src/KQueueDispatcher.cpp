@@ -1,4 +1,5 @@
 #include "KQueueDispatcher.h"
+#include "utils.h"
 
 #include <sys/types.h>
 #include <sys/event.h>

@@ -1,7 +1,8 @@
 env = Environment()
 
 env.Append(ENV = {'PATH' : "%s:/opt/local/bin" % env['ENV']['PATH']})
-env.Append(CCFLAGS = '-I/opt/local/include')
+env.Append(CCFLAGS = '-g -I/opt/local/include')
+env.Append(LINKFLAGS = '-L/opt/local/lib')
 
 ragel = Builder(action = 'ragel -C -o ${TARGET.abspath} ${SOURCE.file}', chdir=1)
 env.Append(BUILDERS = {'Ragel' : ragel})
@@ -9,9 +10,12 @@ env.Append(BUILDERS = {'Ragel' : ragel})
 env.Ragel('http/parser.c', ['http/parser.rl', 'http/common.rl'])
 
 sources = Split("""
+	custer.cpp
+	utils.cpp
 	Dispatcher.cpp
 	KQueueDispatcher.cpp
 	http/parser.c
 """)
 
 objects = env.Object(sources)
+program = env.Program(objects, LIBS=['boost_program_options'])
