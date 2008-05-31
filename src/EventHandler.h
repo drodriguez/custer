@@ -6,6 +6,11 @@ NS_CUSTER_BEGIN
 class EventHandler
 {
 public:
+	void handleAccept();
+	void handleRead();
+	void handleWrite();
+	void handleClose();
+	
 	socket_type getHandle();
 private:
 	socket_type m_handle;

@@ -2,6 +2,7 @@
 
 #include <sys/types.h>
 #include <sys/event.h>
+#include <sys/socket.h>
 #include <sys/time.h>
 #include <cstdio>
 #include <cerrno>
@@ -27,7 +28,7 @@ int translateEvents(EventType et) {
 }
 
 KQueueDispatcher::KQueueDispatcher() :
-	m_eventHandlersMap(),
+	m_eventHandlerMap(),
 	m_keventArraySize(64), // Inicialmente suponemos 64 descriptores
 	m_keventArrayUsed(0)
 {
@@ -70,14 +71,13 @@ void KQueueDispatcher::registerHandler
 	newKevent->data = 0;
 	newKevent->udata = eh.get();
 	
-	m_eventHandlersMap.insert(std::make_pair(eh.get(), std::make_pair(eh, et)));
+	m_eventHandlerMap.insert(std::make_pair(eh.get(), std::make_pair(eh, et)));
 }
 
 void KQueueDispatcher::removeHandler
 	(boost::shared_ptr<EventHandler> eh, EventType et)
 {
-	std::pair<boost::shared_ptr<EventHandler>, EventType> ehp =
-		m_eventHandlersMap[(EventHandler*) eh.get()];
+	EventHandlerPair ehp = m_eventHandlerMap[(EventHandler*) eh.get()];
 	
 	// Primero borramos por completo el antiguo
 	struct kevent* oldKevent = &m_keventArray[m_keventArrayUsed++];
@@ -93,7 +93,7 @@ void KQueueDispatcher::removeHandler
 	
 	// Si el resultado acaba siendo ningún evento, eliminados el EventHandler
 	if (newEventTypes == NO_EVENT) {
-		m_eventHandlersMap.erase(eh.get());
+		m_eventHandlerMap.erase(eh.get());
 		return;
 	}
 	
@@ -106,7 +106,7 @@ void KQueueDispatcher::removeHandler
 	newKevent->data = 0;
 	newKevent->udata = eh.get();
 	
-	m_eventHandlersMap[eh.get()] = std::make_pair(eh, newEventTypes);
+	m_eventHandlerMap[eh.get()] = std::make_pair(eh, newEventTypes);
 }
 
 void KQueueDispatcher::handleEvents(long timeout)
@@ -115,6 +115,7 @@ void KQueueDispatcher::handleEvents(long timeout)
 	struct kevent* activeKevent;
 	struct timespec keventTimeout;
 	
+	// Convertimos el timeout al formato del sistema operativo
 	if (timeout != -1) {
 		long secs = timeout / 1000;
 		long msecs = timeout % 1000;
@@ -123,6 +124,8 @@ void KQueueDispatcher::handleEvents(long timeout)
 		keventTimeout.tv_nsec = msecs * 1000000;
 	}
 	
+	/* Pedimos a KQueue que actualice la lista de eventos y que nos devuelva los
+	   que se hallan generado durante el timeout */
 	numEvents = kevent(
 		m_kqueue,
 		m_keventArray,
@@ -134,14 +137,53 @@ void KQueueDispatcher::handleEvents(long timeout)
 	
 	if (numEvents == -1)
 		fatal("Error en kevent(): %s", strerror(errno));
-	if (numEvents == 0)
-		debug("No se han recibido eventos");
+	if (numEvents == 0) {
+		debug("No se han recibido eventos, timeout: %d", timeout);
+		/* TODO: No definimos el evento de timeout
+		EventHandlerMap::iterator iter;
+		for (iter = m_eventHandlerMap.begin();
+			iter != m_eventHandlerMap.end();
+			++iter) {
+			if (iter->second->second & TIMEOUT_EVENT) {
+				iter->second->first->handleTimeout();
+			}
+		}
+		/**/
+	}
 	
 	for (activeKevent = m_keventArray;
 		activeKevent < &m_keventArray[numEvents];
 		activeKevent++) {
-		std::pair<boost::shared_ptr<EventHandler>, EventType> ehp =
-			m_eventHandlersMap[(EventHandler*) activeKevent->udata];
-		// TODO: enviar el evento correcto
+		EventHandlerPair ehp =
+			m_eventHandlerMap[(EventHandler*) activeKevent->udata];
+		
+		if (activeKevent->filter & EVFILT_READ) {
+			struct sockaddr remoteAddress;
+			socklen_t remoteAddressSize = sizeof(struct sockaddr);
+			memset(&remoteAddress, 0, remoteAddressSize);
+			
+			// Comprobamos si el socket está escuchando
+			// CHECK
+			if (getpeername(
+					activeKevent->ident,
+					&remoteAddress,
+					&remoteAddressSize) == -1) {
+				if (ehp.second & ACCEPT_EVENT) {
+					ehp.first->handleAccept();
+				}
+			} else if (ehp.second & READ_EVENT) {
+				ehp.first->handleRead();
+			}
+		}
+				
+		if (activeKevent->filter & EVFILT_WRITE &&
+			ehp.second & CLOSE_EVENT) {
+			ehp.first->handleWrite();
+		}
+		
+		if (activeKevent->flags & EV_EOF &&
+			ehp.second & CLOSE_EVENT) {
+			ehp.first->handleClose();
+		}
 	}
 }

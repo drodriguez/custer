@@ -32,16 +32,14 @@ public:
 	// Heredada de IDispatcher
 	void handleEvents(long timeout = 0);
 private:
+	typedef std::pair<boost::shared_ptr<EventHandler>, EventType>
+		EventHandlerPair;
+	typedef std::map<EventHandler*, EventHandlerPair> EventHandlerMap;
+	
 	/**
 	 * Almacenamos los shared_ptr para que los punteros no sean destruidos.
 	 */
-	std::map<
-		EventHandler*,
-		std::pair<
-			boost::shared_ptr<EventHandler>,
-			EventType
-		>
-	> m_eventHandlersMap;
+	EventHandlerMap m_eventHandlerMap;
 	
 	/** Vector de kevents */
 	struct kevent* m_keventArray;
