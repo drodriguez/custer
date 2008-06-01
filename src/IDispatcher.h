@@ -18,7 +18,8 @@ enum EventType {
 	ACCEPT_EVENT = 1 << 0,
 	READ_EVENT   = 1 << 1,
 	WRITE_EVENT  = 1 << 2,
-	CLOSE_EVENT  = 1 << 3
+	CLOSE_EVENT  = 1 << 3,
+	ALL_EVENTS   = ACCEPT_EVENT | READ_EVENT | WRITE_EVENT | CLOSE_EVENT
 };
 
 /**

@@ -34,6 +34,13 @@ private:
 	
 	/** Conexión que se servirá */
 	socket_type m_connection;
+	
+	/**
+	 * Cierra la conexión asociada y se desregistra del dispatcher parámetro.
+	 *
+	 * @param dispatcher El dispatcher del que nos desregistraremos.
+	 */
+	void unregister(boost::shared_ptr<IDispatcher> dispatcher);
 };
 
 NS_CUSTER_END

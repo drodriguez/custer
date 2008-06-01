@@ -4,12 +4,13 @@
 #include "custer.h"
 
 #include <boost/shared_ptr.hpp>
+#include <boost/enable_shared_from_this.hpp>
 
 NS_CUSTER_BEGIN
 
 class IDispatcher;
 
-class EventHandler
+class EventHandler : public boost::enable_shared_from_this<EventHandler>
 {
 public:
 	virtual void handleAccept(boost::shared_ptr<IDispatcher> dispatcher) {}

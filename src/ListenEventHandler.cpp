@@ -27,6 +27,8 @@ void ListenEventHandler::handleAccept
 	// Esto no debería bloquear...
 	if ((connection = accept(m_handle, address, &address_len)) == -1)
 		fatal("en accept(): %s", strerror(errno));
+		
+	debug("Conexión aceptada");
 	
 	boost::shared_ptr<ClientEventHandler> handler =
 		boost::shared_ptr<ClientEventHandler>(
