@@ -170,21 +170,21 @@ void KQueueDispatcher::handleEvents(long timeout)
 					&remoteAddress,
 					&remoteAddressSize) == -1) {
 				if (ehp.second & ACCEPT_EVENT) {
-					ehp.first->handleAccept();
+					ehp.first->handleAccept(shared_from_this());
 				}
 			} else if (ehp.second & READ_EVENT) {
-				ehp.first->handleRead();
+				ehp.first->handleRead(shared_from_this());
 			}
 		}
 				
 		if (activeKevent->filter & EVFILT_WRITE &&
 			ehp.second & CLOSE_EVENT) {
-			ehp.first->handleWrite();
+			ehp.first->handleWrite(shared_from_this());
 		}
 		
 		if (activeKevent->flags & EV_EOF &&
 			ehp.second & CLOSE_EVENT) {
-			ehp.first->handleClose();
+			ehp.first->handleClose(shared_from_this());
 		}
 	}
 }

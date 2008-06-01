@@ -23,7 +23,7 @@ enum EventType {
 /**
  * Interfaz para todos los dispatchers.
  */
-class IDispatcher
+class IDispatcher : public boost::enable_shared_from_this<IDispatcher>
 {
 public:	
 	/**
