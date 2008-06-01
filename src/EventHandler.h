@@ -6,13 +6,13 @@ NS_CUSTER_BEGIN
 class EventHandler
 {
 public:
-	virtual void handleAccept() = 0;
-	virtual void handleRead() = 0;
-	virtual void handleWrite() = 0;
-	virtual void handleClose() = 0;
+	virtual void handleAccept(boost::shared_ptr<IDispatcher> dispatcher) {}
+	virtual void handleRead(boost::shared_ptr<IDispatcher> dispatcher) {}
+	virtual void handleWrite(boost::shared_ptr<IDispatcher> dispatcher) {}
+	virtual void handleClose(boost::shared_ptr<IDispatcher> dispatcher) {}
 	
-	socket_type getHandle() { return m_handle; };
-private:
+	virtual socket_type getHandle() { return m_handle; };
+protected:
 	socket_type m_handle;
 };
 
