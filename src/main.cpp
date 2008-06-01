@@ -1,4 +1,5 @@
 #include "custer.h"
+#include "CusterServer.h"
 
 #include <boost/program_options/options_description.hpp>
 #include <boost/program_options/variables_map.hpp>
@@ -15,15 +16,19 @@ int main(int argc, char* argv[])
 		("help,h", "muestra este mensaje de ayuda")
 		("port,p", bpo::value<int>()->default_value(80, " 80"),
 			"puerto al que asociarse")
-		("directory,d", bpo::value<std::string>()->default_value("./", " ./"),
+		("directory,d", bpo::value<std::string>()->default_value(".", " dir. actual"),
 			"directorio que se servira")
 		("verbose,v", "imprime más informacion durante la ejecucion")
 		("debug,d", "imprime informacion de depuracion");
 	
 	bpo::variables_map cmdline_variables;
-	bpo::store(bpo::command_line_parser(argc, argv).options(custer_options).
-		run(), cmdline_variables);
-	bpo::notify(cmdline_variables);
+	try {
+		bpo::store(bpo::command_line_parser(argc, argv).
+			options(custer_options).run(), cmdline_variables);
+		bpo::notify(cmdline_variables);
+	} catch (bpo::error& err) {
+		fatal("%s", err.what()); 
+	}
 	
 	if (cmdline_variables.count("help")) {
 		std::cout << custer_options << std::endl;
@@ -37,9 +42,14 @@ int main(int argc, char* argv[])
 		logLevel = DEBUG;
 	}
 	
-	debug("Puerto: %d", cmdline_variables["port"].as<int>());
+	uint16_t port = cmdline_variables["port"].as<int>();
+	std::string directory = cmdline_variables["directory"].as<std::string>();
+	debug("Puerto: %u", port);
+	debug("Directorio: '%s'", directory.c_str());
 	
-	debug("Directorio: %s", cmdline_variables["directory"].as<std::string>().c_str());
+	custer::CusterServer custerServer(port, directory);
+	
+	custerServer.run();
 	
 	return 0;
 }
