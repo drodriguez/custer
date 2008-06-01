@@ -12,16 +12,19 @@ static void vlog(char* fmt, va_list ap)
 	fputc('\n', stderr);
 }
 
-#define FATAL "FATAL"
-#define ERROR "ERROR"
-#define WARN  "WARN "
-#define INFO  "INFO "
-#define DEBUG "DEBUG"
+#define FATAL_MSG "FATAL"
+#define ERROR_MSG "ERROR"
+#define WARN_MSG  "WARN "
+#define INFO_MSG  "INFO "
+#define DEBUG_MSG "DEBUG"
+
+unsigned int logLevel = WARN;
 
 #define LOG_WITH_LEVEL(x) \
+	if (logLevel < (x)) return; \
 	va_list ap; \
 	va_start(ap, fmt); \
-	fprintf(stderr, "custer [" x "]: "); \
+	fprintf(stderr, "custer [" x##_MSG "]: "); \
 	vlog(fmt, ap); \
 	va_end(ap);
 
