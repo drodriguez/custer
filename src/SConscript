@@ -10,7 +10,7 @@ env.Append(BUILDERS = {'Ragel' : ragel})
 env.Ragel('http/parser.c', ['http/parser.rl', 'http/common.rl'])
 
 sources = Split("""
-	custer.cpp
+	main.cpp
 	utils.cpp
 	Dispatcher.cpp
 	KQueueDispatcher.cpp
@@ -18,4 +18,4 @@ sources = Split("""
 """)
 
 objects = env.Object(sources)
-program = env.Program(objects, LIBS=['boost_program_options'])
+program = env.Program('custer', objects, LIBS=['boost_program_options'])
