@@ -19,10 +19,10 @@ public:
 	Dispatcher();
 	
 	// Heredada de IDispatcher
-	void registerHandler(boost::shared_ptr<EventHandler> eh, EventType et);
+	void registerHandler(boost::shared_ptr<EventHandler> eh, unsigned int et);
 	
 	// Heredada de IDispatcher
-	void removeHandler(boost::shared_ptr<EventHandler> eh, EventType et);
+	void removeHandler(boost::shared_ptr<EventHandler> eh, unsigned int et);
 	
 	// Heredada de IDispatcher
 	void handleEvents(long timeout = 0);

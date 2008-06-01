@@ -5,6 +5,7 @@
 #include "EventHandler.h"
 
 #include <boost/shared_ptr.hpp>
+#include <boost/enable_shared_from_this.hpp>
 
 NS_CUSTER_BEGIN
 
@@ -13,7 +14,7 @@ NS_CUSTER_BEGIN
  * realizar aritmética de bits con ellos.
  */
 enum EventType {
-	NO_EVENT   = 0,
+	NO_EVENT     = 0,
 	ACCEPT_EVENT = 1 << 0,
 	READ_EVENT   = 1 << 1,
 	WRITE_EVENT  = 1 << 2,
@@ -34,7 +35,7 @@ public:
 	 *           puede responder a varios haciendo un OR (|) de sus valores.
 	 */
 	virtual void registerHandler
-		(boost::shared_ptr<EventHandler> eh, EventType et) = 0;
+		(boost::shared_ptr<EventHandler> eh, unsigned int et) = 0;
 		
 	/**
 	 * Elimina un EventHandler de un EventType específico.
@@ -44,7 +45,7 @@ public:
 	 *           dejar de responder a varios haciendo un OR (|) de sus valores.
 	 */
 	virtual void removeHandler
-		(boost::shared_ptr<EventHandler> eh, EventType et) = 0;
+		(boost::shared_ptr<EventHandler> eh, unsigned int et) = 0;
 	
 	/**
 	 * Método que captura los eventos que suceden en el sistema operativo y los

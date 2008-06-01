@@ -9,13 +9,13 @@ Dispatcher::Dispatcher() :
 }
 
 void Dispatcher::registerHandler
-	(boost::shared_ptr<EventHandler> eh, EventType et)
+	(boost::shared_ptr<EventHandler> eh, unsigned int et)
 {
 	m_dispatcher.registerHandler(eh, et);
 }
 
 void Dispatcher::removeHandler
-	(boost::shared_ptr<EventHandler> eh, EventType et)
+	(boost::shared_ptr<EventHandler> eh, unsigned int et)
 {
 	m_dispatcher.removeHandler(eh, et);	
 }

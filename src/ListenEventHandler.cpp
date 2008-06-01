@@ -1,7 +1,11 @@
 #include "ListenEventHandler.h"
+#include "ClientEventHandler.h"
 
 #include <cstring>
 #include <cerrno>
+
+#include <netinet/in.h>
+#include <sys/socket.h>
 
 using namespace custer;
 
@@ -12,11 +16,12 @@ ListenEventHandler::ListenEventHandler(
 	// Nothing
 }
 
-void ListenEventHandler::handleAccept(IDispatcher* dispatcher)
+void ListenEventHandler::handleAccept
+	(boost::shared_ptr<IDispatcher> dispatcher)
 {
 	debug("ListenEventHandler::handleAccept");
 	socket_type connection;
-	struct sockaddr_in* address;
+	struct sockaddr* address;
 	socklen_t address_len = sizeof(struct sockaddr_in);
 	
 	// Esto no debería bloquear...
@@ -24,13 +29,15 @@ void ListenEventHandler::handleAccept(IDispatcher* dispatcher)
 		fatal("en accept(): %s", strerror(errno));
 	
 	boost::shared_ptr<ClientEventHandler> handler =
-		boost::shared_ptr(new ClientEventHandler(m_server, connection));
+		boost::shared_ptr<ClientEventHandler>(
+			new ClientEventHandler(m_server, connection));
 	dispatcher->registerHandler(
 		handler,
 		READ_EVENT | WRITE_EVENT | CLOSE_EVENT);
 }
 
-void ListenEventHandler::handleClose(IDispatcher* dispatcher)
+void ListenEventHandler::handleClose
+	(boost::shared_ptr<IDispatcher> dispatcher)
 {
 	debug("ListerEventHandler::handleClose");
 }

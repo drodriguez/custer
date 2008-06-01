@@ -11,11 +11,19 @@ env.Ragel('http/parser.c', ['http/parser.rl', 'http/common.rl'])
 
 sources = Split("""
 	main.cpp
+	CusterServer.cpp
+	ListenEventHandler.cpp
+	ClientEventHandler.cpp
 	utils.cpp
 	Dispatcher.cpp
 	KQueueDispatcher.cpp
 	http/parser.c
 """)
 
+libs = Split("""
+	boost_program_options
+	boost_filesystem
+""")
+
 objects = env.Object(sources)
-program = env.Program('custer', objects, LIBS=['boost_program_options'])
+program = env.Program('custer', objects, LIBS=libs)

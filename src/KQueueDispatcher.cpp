@@ -16,7 +16,7 @@ using namespace custer;
  * @param et Los eventos a capturar.
  * @return Los eventos equivalentes en KQueue.
  */
-int translateEvents(EventType et) {
+int translateEvents(unsigned int et) {
 	int result = 0;
 	
 	if (et == NO_EVENT)    return 0;
@@ -48,7 +48,7 @@ KQueueDispatcher::~KQueueDispatcher()
 }
 
 void KQueueDispatcher::registerHandler
-	(boost::shared_ptr<EventHandler> eh, EventType et)
+	(boost::shared_ptr<EventHandler> eh, unsigned int et)
 {
 	// Si no se piden eventos no lo añadimos.
 	if (et == NO_EVENT) return;
@@ -76,7 +76,7 @@ void KQueueDispatcher::registerHandler
 }
 
 void KQueueDispatcher::removeHandler
-	(boost::shared_ptr<EventHandler> eh, EventType et)
+	(boost::shared_ptr<EventHandler> eh, unsigned int et)
 {
 	EventHandlerPair ehp = m_eventHandlerMap[(EventHandler*) eh.get()];
 	
@@ -90,7 +90,7 @@ void KQueueDispatcher::removeHandler
 	oldKevent->udata = NULL;
 	
 	// Calculamos el resultado de los eventos antiguos y los nuevos
-	EventType newEventTypes =  static_cast<EventType>(ehp.second & !et);
+	unsigned int newEventTypes =  ehp.second & !et;
 	
 	// Si el resultado acaba siendo ningún evento, eliminados el EventHandler
 	if (newEventTypes == NO_EVENT) {

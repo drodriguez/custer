@@ -3,13 +3,15 @@
 
 #include "custer.h"
 
+#include <boost/shared_ptr.hpp>
+#include <boost/enable_shared_from_this.hpp>
 #include <boost/filesystem/path.hpp>
 
 #include <string>
 
 NS_CUSTER_BEGIN
 
-class CusterServer : public boost:enable_shared_from_this<CusterServer>
+class CusterServer : public boost::enable_shared_from_this<CusterServer>
 {
 public:
 	/**

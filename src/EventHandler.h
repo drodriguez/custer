@@ -1,7 +1,13 @@
 #ifndef EVENT_HANDLER_H
 #define EVENT_HANDLER_H
 
+#include "custer.h"
+
+#include <boost/shared_ptr.hpp>
+
 NS_CUSTER_BEGIN
+
+class IDispatcher;
 
 class EventHandler
 {

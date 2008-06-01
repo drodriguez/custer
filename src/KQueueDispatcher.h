@@ -24,15 +24,15 @@ public:
 	virtual ~KQueueDispatcher();
 	
 	// Heredada de IDispatcher
-	void registerHandler(boost::shared_ptr<EventHandler> eh, EventType et);
+	void registerHandler(boost::shared_ptr<EventHandler> eh, unsigned int et);
 	
 	// Heredada de IDispatcher
-	void removeHandler(boost::shared_ptr<EventHandler> eh, EventType et);
+	void removeHandler(boost::shared_ptr<EventHandler> eh, unsigned int et);
 	
 	// Heredada de IDispatcher
 	void handleEvents(long timeout = 0);
 private:
-	typedef std::pair<boost::shared_ptr<EventHandler>, EventType>
+	typedef std::pair<boost::shared_ptr<EventHandler>, unsigned int>
 		EventHandlerPair;
 	typedef std::map<EventHandler*, EventHandlerPair> EventHandlerMap;
 	

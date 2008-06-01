@@ -1,8 +1,8 @@
-#include "ClientEventHandler.hpp"
+#include "ClientEventHandler.h"
 
 using namespace custer;
 
-ClientEventHadler::ClientEventHandler(
+ClientEventHandler::ClientEventHandler(
 	boost::shared_ptr<CusterServer> server,
 	socket_type connection) :
 	m_server(server),

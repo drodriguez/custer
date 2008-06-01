@@ -2,6 +2,7 @@
 #define CLIENTEVENTHANDLER_H
 
 #include "custer.h"
+#include "CusterServer.h"
 
 NS_CUSTER_BEGIN
 

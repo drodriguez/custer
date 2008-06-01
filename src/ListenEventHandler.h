@@ -2,6 +2,7 @@
 #define LISTENEVENTHANDLER_H
 
 #include "custer.h"
+#include "CusterServer.h"
 
 NS_CUSTER_BEGIN
 
@@ -20,6 +21,10 @@ public:
 	
 	// heredado de EventHandler
 	void handleClose(boost::shared_ptr<IDispatcher>  dispatcher);
+
+private:
+	/** Servidor que posee este ListenEventHandler */
+	boost::shared_ptr<CusterServer> m_server;
 };
 
 NS_CUSTER_END
