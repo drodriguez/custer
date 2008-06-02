@@ -2,6 +2,7 @@
 #define CUSTERSERVER_H
 
 #include "custer.h"
+#include "Dispatcher.h"
 
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
@@ -48,6 +49,9 @@ private:
 	
 	/** Directorio que se sirve */
 	boost::filesystem::path m_directory;
+	
+	/** Dispatcher que gestiona las conexiones de este servidor */
+	boost::shared_ptr<Dispatcher> m_dispatcher;
 };
 
 NS_CUSTER_END
