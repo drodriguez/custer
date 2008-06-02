@@ -47,9 +47,10 @@ int main(int argc, char* argv[])
 	debug("Puerto: %u", port);
 	debug("Directorio: '%s'", directory.c_str());
 	
-	custer::CusterServer custerServer(port, directory);
+	boost::shared_ptr<custer::CusterServer> custerServer(
+		new custer::CusterServer(port, directory));
 	
-	custerServer.run();
+	custerServer->run();
 	
 	return 0;
 }
