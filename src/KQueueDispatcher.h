@@ -30,7 +30,7 @@ public:
 	void removeHandler(boost::shared_ptr<EventHandler> eh, unsigned int et);
 	
 	// Heredada de IDispatcher
-	void handleEvents(long timeout = 0);
+	void handleEvents(long timeout = -1);
 private:
 	typedef std::pair<boost::shared_ptr<EventHandler>, unsigned int>
 		EventHandlerPair;
@@ -41,14 +41,17 @@ private:
 	 */
 	EventHandlerMap m_eventHandlerMap;
 	
-	/** Vector de kevents */
-	struct kevent* m_keventArray;
+	/** Vector de kevents por actualizar */
+	struct kevent* m_keventChanges;
+	
+	/** Vector de kevents con eventos */
+	struct kevent* m_keventList;
 	
 	/** Total de kevents disponibles */
-	unsigned int m_keventArraySize;
+	unsigned int m_keventSize;
 	
 	/** kevents utilizados */
-	unsigned int m_keventArrayUsed;
+	unsigned int m_keventUsed;
 	
 	/** Descriptor del kqueue */
 	int m_kqueue;

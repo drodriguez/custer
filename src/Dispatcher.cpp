@@ -3,7 +3,7 @@
 using namespace custer;
 
 Dispatcher::Dispatcher() :
-	m_dispatcher()
+	m_dispatcher(new NativeDispatcher())
 {
 	// Nothing
 }
@@ -11,16 +11,16 @@ Dispatcher::Dispatcher() :
 void Dispatcher::registerHandler
 	(boost::shared_ptr<EventHandler> eh, unsigned int et)
 {
-	m_dispatcher.registerHandler(eh, et);
+	m_dispatcher->registerHandler(eh, et);
 }
 
 void Dispatcher::removeHandler
 	(boost::shared_ptr<EventHandler> eh, unsigned int et)
 {
-	m_dispatcher.removeHandler(eh, et);	
+	m_dispatcher->removeHandler(eh, et);	
 }
 
 void Dispatcher::handleEvents(long timeout)
 {
-	m_dispatcher.handleEvents(timeout);
+	m_dispatcher->handleEvents(timeout);
 }

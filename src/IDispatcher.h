@@ -2,12 +2,13 @@
 #define IDISPATCHER_H
 
 #include "custer.h"
-#include "EventHandler.h"
 
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
 
 NS_CUSTER_BEGIN
+
+class EventHandler;
 
 /**
  * Tipos de eventos que son entendidos. Los valores son compatibles para
@@ -54,7 +55,7 @@ public:
 	 *
 	 * @param timeout Tiempo de espera de los eventos (en milisegundos).
 	 */
-	virtual void handleEvents(long timeout = 0) = 0;
+	virtual void handleEvents(long timeout = -1) = 0;
 };
 
 NS_CUSTER_END

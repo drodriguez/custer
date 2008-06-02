@@ -25,10 +25,10 @@ public:
 	void removeHandler(boost::shared_ptr<EventHandler> eh, unsigned int et);
 	
 	// Heredada de IDispatcher
-	void handleEvents(long timeout = 0);
+	void handleEvents(long timeout = -1);
 	
 private:
-	NativeDispatcher m_dispatcher;
+	boost::shared_ptr<NativeDispatcher> m_dispatcher;
 };
 
 NS_CUSTER_END
