@@ -2,9 +2,11 @@
 #define CLIENTEVENTHANDLER_H
 
 #include "custer.h"
-#include "CusterServer.h"
+#include "EventHandler.h"
 
 NS_CUSTER_BEGIN
+
+class CusterServer;
 
 class ClientEventHandler : public EventHandler
 {
@@ -31,10 +33,7 @@ public:
 private:
 	/** Servidor al que pertenece el ClientEventHandler */
 	boost::shared_ptr<CusterServer> m_server;
-	
-	/** Conexión que se servirá */
-	socket_type m_connection;
-	
+		
 	/**
 	 * Cierra la conexión asociada y se desregistra del dispatcher parámetro.
 	 *
