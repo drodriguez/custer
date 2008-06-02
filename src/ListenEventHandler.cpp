@@ -1,5 +1,6 @@
 #include "ListenEventHandler.h"
 #include "ClientEventHandler.h"
+#include "CusterServer.h"
 
 #include <cstring>
 #include <cerrno>
@@ -7,13 +8,44 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 
+#define BACKLOG 32
+
 using namespace custer;
 
 ListenEventHandler::ListenEventHandler(
 	boost::shared_ptr<CusterServer> server) :
 	m_server(server)
 {
-	// Nothing
+	struct in_addr listenAddress;
+	struct sockaddr_in inetListenAddress;
+	int one = 1;
+	
+	listenAddress.s_addr = htonl(INADDR_ANY);
+	
+	if ((m_handle = socket(PF_INET, SOCK_STREAM, 0)) == -1)
+		fatal("creando socket: %s", strerror(errno));
+	
+	if (setsockopt(
+		m_handle,
+		SOL_SOCKET,
+		SO_REUSEADDR,
+		&one,
+		sizeof(one)) == -1)
+		fatal("establenciendo SO_REUSEADDR: %s", strerror(errno));
+
+	memset(&inetListenAddress, 0, sizeof(inetListenAddress));
+	inetListenAddress.sin_family = AF_INET;
+	inetListenAddress.sin_addr   = listenAddress;
+	inetListenAddress.sin_port   = htons(server->getPort());
+	
+	if (bind(
+		m_handle,
+		(struct sockaddr*) &inetListenAddress,
+		sizeof(inetListenAddress)) == -1)
+		fatal("asociando socket: %s", strerror(errno));
+	
+	if (listen(m_handle, BACKLOG) == -1)
+		fatal("escuchando en el socket: %s", strerror(errno));
 }
 
 void ListenEventHandler::handleAccept
@@ -30,12 +62,10 @@ void ListenEventHandler::handleAccept
 		
 	debug("Conexión aceptada");
 	
-	boost::shared_ptr<ClientEventHandler> handler =
-		boost::shared_ptr<ClientEventHandler>(
+	boost::shared_ptr<ClientEventHandler> handler(
 			new ClientEventHandler(m_server, connection));
-	dispatcher->registerHandler(
-		handler,
-		READ_EVENT | WRITE_EVENT | CLOSE_EVENT);
+		
+	dispatcher->registerHandler(handler, READ_EVENT | WRITE_EVENT | CLOSE_EVENT);
 }
 
 void ListenEventHandler::handleClose

@@ -8,8 +8,6 @@
 
 NS_CUSTER_BEGIN
 
-class IDispatcher;
-
 class EventHandler : public boost::enable_shared_from_this<EventHandler>
 {
 public:
@@ -18,7 +16,7 @@ public:
 	virtual void handleWrite(boost::shared_ptr<IDispatcher> dispatcher) {}
 	virtual void handleClose(boost::shared_ptr<IDispatcher> dispatcher) {}
 	
-	virtual socket_type getHandle() { return m_handle; };
+	virtual socket_type getHandle() const { return m_handle; };
 protected:
 	socket_type m_handle;
 };

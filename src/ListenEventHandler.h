@@ -2,9 +2,11 @@
 #define LISTENEVENTHANDLER_H
 
 #include "custer.h"
-#include "CusterServer.h"
+#include "EventHandler.h"
 
 NS_CUSTER_BEGIN
+
+class CusterServer;
 
 class ListenEventHandler : public EventHandler
 {
