@@ -3,6 +3,10 @@
 
 #include "custer.h"
 #include "EventHandler.h"
+#include "HttpRequest.h"
+#include "http/parser.h"
+
+#include <string>
 
 NS_CUSTER_BEGIN
 
@@ -33,7 +37,25 @@ public:
 private:
 	/** Servidor al que pertenece el ClientEventHandler */
 	boost::shared_ptr<CusterServer> m_server;
-		
+	
+	/** Bytes ya parseados */
+	int m_nparsed;
+	
+	/** Datos de la cabecera */
+	char* m_data;
+	
+	/** Longitud de los datos */
+	int m_dataLength;
+	
+	/** Parser HTTP */
+	http_parser* m_parser;
+	
+	/** Parámetros HTTP */
+	boost::shared_ptr<ParamsMap> m_params;
+	
+	/** Request HTTP */
+	boost::shared_ptr<HttpRequest> m_request;
+	
 	/**
 	 * Cierra la conexión asociada y se desregistra del dispatcher parámetro.
 	 *
