@@ -17,12 +17,14 @@ sources = Split("""
 	utils.cpp
 	Dispatcher.cpp
 	KQueueDispatcher.cpp
+	HttpRequest.cpp
 	http/parser.c
 """)
 
 libs = Split("""
 	boost_program_options
 	boost_filesystem
+	boost_regex
 """)
 
 objects = env.Object(sources)
