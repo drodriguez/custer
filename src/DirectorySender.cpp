@@ -1,11 +1,14 @@
 #include "DirectorySender.h"
 
-#include <boost/filesystem/operations.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/algorithm/string.hpp>
 
 using namespace custer;
 namespace bfs = boost::filesystem;
+namespace ba = boost::algorithm;
 
 static std::string defaultContentType("application/octet-stream");
+static std::string onlyHeadOrGet("Only HEAD and GET allowed.");
 
 DirectorySender::DirectorySender(
 	std::string directory,
@@ -58,15 +61,24 @@ void DirectorySender::sendDirectoryListing(
 	boost::shared_ptr<HttpResponse> response)
 {
 	// Quitamos cualquier barra al final, para que los enlaces funcionen.
-	std::string cleanBase = HttpRequest.unescape(base);
-	// TODO: eliminar último caracter si es una "/"
+	std::string cleanBase = HttpRequest::unescape(base);
+	if (ba::ends_with(cleanBase, "/")) {
+		ba::erase_tail(cleanBase, 1);
+	}
 	
 	if (m_listing_allowed) {
 		response->setStatus(HTTP_STATUS_OK);
 		response->headers[HTTP_CONTENT_TYPE] = "text/html";
 		response->out << "<html><head><title>Directory listing</title></head><body>";
 		
-		// TODO: iterar por las entradas del directorio
+		bfs::directory_iterator endIter;
+		for (bfs::directory_iterator iter(directory);
+			iter != endIter;
+			++iter) {
+				response->out << "<a href=\"" << cleanBase << "/"
+					<< HttpRequest::escape(iter->leaf()) << "\">";
+				response->out << "</a></br />";
+		}
 		
 		response->out << "</body></html>"
 		response->send();
@@ -80,16 +92,47 @@ void DirectorySender::sendDirectoryListing(
 void DirectorySender::sendFile(
 	boost::filesystem::path requestPath,
 	boost::shared_ptr<HttpResquest> request,
-	boost::shared_ptr<HttpResponse> response)
+	boost::shared_ptr<HttpResponse> response,
+	bool headerOnly)
 {
-	response->setStatus(200);
+	response->setStatus(HTTP_STATUS_OK);
 	// TODO: establecer el MIME-Type basandose en la extensión
 	response->header[HTTP_CONTENT_TYPE] = defaultContentType;
 	
 	// TODO: enviar ¿status? con content-length
 	response->sendHeaders();
-	// TODO: enviar el fichero
-	// response->sendFile(requestPath, )
+	if (!headerOnly) {
+		// TODO: enviar el fichero
+		// response->sendFile(requestPath, )
+	}
+	response->send();
 }
 
-void
+void DirectorySender::process(
+	boost::shared_ptr<HttpRequest> request,
+	boost::shared_ptr<HttpResponse> response)
+{
+	HttpRequest::Method requestMethod = request->getRequestMethod();
+	bfs::path requestPath = canServe(request->getPathInfo());
+	
+	if (requestPath.empty()) {
+		response->setStatus(HTTP_STATUS_NOT_FOUND);
+		response->out << "Not found";
+		response->send();
+	} else {
+		if (bfs::is_directory(requestPath)) {
+			sendDirectoryListing(
+				request->getRequestURI(),
+				requestPath,
+				response);
+		} else if (requestMethod == HTTP_REQUEST_METHOD_HEAD) {
+			sendFile(requestPath, request, response, true);
+		} else if (requestMethod == HTTP_REQUEST_METHOD_GET) {
+			sendFile(requestPath, request, response, false);
+		} else {
+			response->setStatus(HTTP_STATUS_METHOD_NOT_ALLOWED);
+			response->out << onlyHeadOrGet;
+			response->send();
+		}
+	}
+}
