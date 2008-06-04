@@ -6,6 +6,11 @@
 #ifndef http11_parser_h
 #define http11_parser_h
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 #include <sys/types.h>
 
 #if defined(_WIN32)
@@ -44,6 +49,10 @@ size_t http_parser_execute(http_parser *parser, const char *data, size_t len, si
 int http_parser_has_error(http_parser *parser);
 int http_parser_is_finished(http_parser *parser);
 
-#define http_parser_nread(parser) (parser)->nread 
+#define http_parser_nread(parser) (parser)->nread
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
