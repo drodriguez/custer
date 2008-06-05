@@ -18,6 +18,8 @@ sources = Split("""
 	Dispatcher.cpp
 	KQueueDispatcher.cpp
 	HttpRequest.cpp
+	HttpResponse.cpp
+	DirectorySender.cpp
 	http/parser.c
 """)
 
