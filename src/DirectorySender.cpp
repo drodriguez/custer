@@ -121,7 +121,9 @@ void DirectorySender::sendDirectoryListing(
 	if (m_allowListing) {
 		response->setStatus(HTTP_STATUS_OK);
 		response->setHeader(HTTP_CONTENT_TYPE, "text/html");
-		response->out << "<html><head><title>Directory listing</title></head><body>";
+		response->out << "<html><head><title>Listado del directorio</title></head><body>";
+		
+		response->out << "<a href=\"" << cleanBase << "/..\">Ir al padre...</a><br />";
 		
 		bfs::directory_iterator endIter;
 		for (bfs::directory_iterator iter(directory);
@@ -129,7 +131,7 @@ void DirectorySender::sendDirectoryListing(
 			++iter) {
 				response->out << "<a href=\"" << cleanBase << "/"
 					<< HttpRequest::escape(iter->leaf()) << "\">";
-				response->out << "</a></br />";
+				response->out << iter->leaf() << "</a></br />";
 		}
 		
 		response->out << "</body></html>";
@@ -147,6 +149,7 @@ void DirectorySender::sendFile(
 	boost::shared_ptr<HttpResponse> response,
 	bool headerOnly)
 {
+	debug("DirectorySender::sendFile");
 	response->setStatus(HTTP_STATUS_OK);
 	
 	std::string extension = bfs::extension(requestPath);
@@ -188,9 +191,9 @@ void DirectorySender::process(
 				requestPath,
 				response);
 		} else if (requestMethod == HttpRequest::GET) {
-			sendFile(requestPath, request, response, true);
-		} else if (requestMethod == HttpRequest::HEAD) {
 			sendFile(requestPath, request, response, false);
+		} else if (requestMethod == HttpRequest::HEAD) {
+			sendFile(requestPath, request, response, true);
 		} else {
 			response->setStatus(HTTP_STATUS_METHOD_NOT_ALLOWED);
 			response->out << onlyHeadOrGet;

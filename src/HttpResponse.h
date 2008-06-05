@@ -8,6 +8,7 @@
 #include <map>
 #include <string>
 #include <sstream>
+#include <fstream>
 
 NS_CUSTER_BEGIN
 
@@ -161,8 +162,8 @@ private:
 	/** La cadena que se envia como mensaje HTTP */
 	std::stringstream m_httpMessage;
 	
-	/** La posición en la cadena del mensaje HTTP */
-	size_t m_httpMessagePos;
+	/** El fichero que se puede enviar */
+	std::ifstream m_file;
 };
 
 NS_CUSTER_END

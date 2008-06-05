@@ -41,7 +41,7 @@ HttpResponse::HttpResponse(socket_type connection) :
 	m_bodySent(false),
 	m_headersSent(false),
 	m_statusSent(false),
-	m_httpMessagePos(0)
+	m_file()
 {
 	bpt::ptime now = bpt::second_clock::universal_time();
 	m_headers[HTTP_DATE] = toHTTPDate(now);
@@ -59,9 +59,7 @@ void HttpResponse::sendStatus(long contentLength)
 	if (m_statusSent) return;
 	debug("HttpResponse::sendStatus");
 	
-	
-	// TODO: calcular la longitud del body
-	if (contentLength < 0) contentLength = 0;
+	if (contentLength < 0) contentLength = out.str().length();
 	
 	if (contentLength > 0 && m_status != HTTP_STATUS_NOT_MODIFIED) {
 		setHeader(
@@ -95,15 +93,22 @@ void HttpResponse::sendBody()
 	if (m_bodySent) return;
 	debug("HttpResponse::sendBody");
 	
-	
-	// TODO: enviar el body o el file.
+	// ¿Hay que hacer algo aquí?
 	
 	m_bodySent = true;
 }
 
 void HttpResponse::sendFile(boost::filesystem::path filePath)
 {
-	// TODO
+	if (m_file.is_open()) return;
+	
+	debug("HttpResponse::sendFile");
+	m_file.open(
+		filePath.string().c_str(),
+		std::ios_base::in | std::ios_base::binary);
+	if (m_file.fail()) {
+		error("abriendo el archivo para lectura");
+	}
 }
 
 void HttpResponse::handleWrite()
@@ -115,7 +120,11 @@ void HttpResponse::handleWrite()
 		debug("Leyendo parte de las cabeceras");
 		m_httpMessage.read(buffer, CHUNK_SIZE);
 		nr = m_httpMessage.gcount();
-	} else {
+	} else if (m_file.is_open() && !m_file.eof()) {
+		debug("Leyendo file");
+		m_file.read(buffer, CHUNK_SIZE);
+		nr = m_file.gcount();
+	} else if (!m_file.is_open() && !out.eof()){
 		debug("Leyendo out");
 		out.read(buffer, CHUNK_SIZE);
 		nr = out.gcount();
@@ -134,7 +143,8 @@ void HttpResponse::handleWrite()
 		error("nw y nr son diferentes: nw = %d, nr = %d", nw, nr);
 	}
 	
-	if (out.eof()) {
+	if ((m_file.is_open() && m_file.eof())
+		|| (!m_file.is_open() && out.eof())) {
 		debug("cerrando el socket");
 		close(m_connection);
 	}

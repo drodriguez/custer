@@ -7,6 +7,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include <map>
+#include <sys/types.h>
 
 NS_CUSTER_BEGIN
 
@@ -55,6 +56,24 @@ private:
 	
 	/** Descriptor del kqueue */
 	int m_kqueue;
+	
+	/** Redimensiona los vector de kevents si es necesario */
+	void resizeKeventsVectors();
+	
+	/**
+	 * Realiza las modificaciones necesarias al vector de cambios de los
+	 * kevents.
+	 *
+	 * @param et EventTypes a modificar.
+	 * @param ident El identificador del kevent (descriptor de fichero).
+	 * @param flags Los flags que se deben establecer en el kevent.
+	 * @param udata Los datos de usuario que se deben establecer en el kevent.
+	 */
+	void modifyKevents(
+		unsigned int et,
+		uintptr_t ident,
+		u_short flags,
+		void* udata);
 };
 
 typedef KQueueDispatcher NativeDispatcher;

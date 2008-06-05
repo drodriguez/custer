@@ -124,10 +124,10 @@ void ClientEventHandler::handleRead(boost::shared_ptr<IDispatcher> dispatcher)
 		
 	if ((n = read(m_handle, buffer, CHUNK_SIZE)) == -1) {
 		error("Error leyendo de socket: %s", strerror(errno));
-		unregister(dispatcher);
+		closeConnection(dispatcher);
 	} else if (n == 0) {
 		warn("Recibidos 0 bytes");
-		unregister(dispatcher);
+		closeConnection(dispatcher);
 	}
 	debug("Recibidos %d bytes", n);
 	
@@ -135,38 +135,44 @@ void ClientEventHandler::handleRead(boost::shared_ptr<IDispatcher> dispatcher)
 	// contenidos al request.
 	if (http_parser_is_finished(m_parser)) {
 		m_request->handleRead(buffer, n);
-		return;
-	}
+	} else {
+		if (m_dataLength + n >= HTTP_MAX_HEADER) {
+			error("Longitud de HEADER excesiva. Cliente expulsado");
+			closeConnection(dispatcher);
+		}
 	
-	if (m_dataLength + n >= HTTP_MAX_HEADER) {
-		error("Longitud de HEADER excesiva. Cliente expulsado");
-		unregister(dispatcher);
-	}
+		memcpy(m_data+m_dataLength, buffer, n);
+		m_dataLength += n;
 	
-	memcpy(m_data+m_dataLength, buffer, n);
-	m_dataLength += n;
-	
-	if (m_nparsed < m_dataLength) {
-		debug("Parseando desde %d hasta %d", m_nparsed, m_dataLength);
-		m_nparsed = http_parser_execute(m_parser, m_data, m_dataLength, m_nparsed);
+		if (m_nparsed < m_dataLength) {
+			debug("Parseando desde %d hasta %d", m_nparsed, m_dataLength);
+			m_nparsed = http_parser_execute(m_parser, m_data, m_dataLength, m_nparsed);
 		
-		if (http_parser_is_finished(m_parser)) {
-			debug("El parser ha finalizado");
+			if (http_parser_is_finished(m_parser)) {
+				debug("El parser ha finalizado");
 			
-			if (m_params->find(HTTP_REQUEST_PATH) == m_params->end()) {
-				error("Sin REQUEST_PATH");
-				unregister(dispatcher);
-			}
+				if (m_params->find(HTTP_REQUEST_PATH) == m_params->end()) {
+					error("Sin REQUEST_PATH");
+					closeConnection(dispatcher);
+				}
 						
-			// TODO: REMOTE_ADDR
+				// TODO: REMOTE_ADDR
 			
-			m_request = boost::shared_ptr<HttpRequest>(
-				new HttpRequest(m_params));
-			// FIX: SCRIPT_NAME y PATH_INFO
-			m_request->setParam(HTTP_SCRIPT_NAME, HTTP_SLASH);
-			m_request->setParam(HTTP_PATH_INFO, (*m_params)[HTTP_REQUEST_URI]);
+				m_request = boost::shared_ptr<HttpRequest>(
+					new HttpRequest(m_params));
+				// FIX: SCRIPT_NAME y PATH_INFO
+				m_request->setParam(HTTP_SCRIPT_NAME, HTTP_SLASH);
+				m_request->setParam(HTTP_PATH_INFO, (*m_params)[HTTP_REQUEST_URI]);			
+			}
 		}
 	}
+	
+	if (m_request && m_request->isComplete()) {
+		boost::shared_ptr<EventHandler> self(shared_from_this());
+		dispatcher->removeHandler(self, READ_EVENT);
+		dispatcher->registerHandler(self, WRITE_EVENT | CLOSE_EVENT);
+	}
+	
 }
 
 void ClientEventHandler::handleWrite(boost::shared_ptr<IDispatcher> dispatcher)
@@ -189,15 +195,14 @@ void ClientEventHandler::handleWrite(boost::shared_ptr<IDispatcher> dispatcher)
 void ClientEventHandler::handleClose(boost::shared_ptr<IDispatcher> dispatcher)
 {
 	debug("ClientEventHandler::handleClose");
-	unregister(dispatcher);
+	closeConnection(dispatcher);
 }
 
-void ClientEventHandler::unregister(boost::shared_ptr<IDispatcher> dispatcher)
+void ClientEventHandler::closeConnection(boost::shared_ptr<IDispatcher> dispatcher)
 {
-	debug("ClienteEventHandler::unregister");
-	// FIX: Al cerrar un descriptor los kevents asociados se destruyen, si le
+	debug("ClienteEventHandler::closeConnection");
+	// Al cerrar un descriptor los kevents asociados se destruyen, si le
 	// pedimos eliminarlo y luego lo cerramos se produce un error al invocar
 	// a kevent.
-	// dispatcher->removeHandler(shared_from_this(), ALL_EVENTS);
 	close(m_handle);
 }

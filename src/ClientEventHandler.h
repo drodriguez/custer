@@ -69,7 +69,7 @@ private:
 	 *
 	 * @param dispatcher El dispatcher del que nos desregistraremos.
 	 */
-	void unregister(boost::shared_ptr<IDispatcher> dispatcher);
+	void closeConnection(boost::shared_ptr<IDispatcher> dispatcher);
 };
 
 NS_CUSTER_END
