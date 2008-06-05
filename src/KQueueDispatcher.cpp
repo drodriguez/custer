@@ -81,7 +81,14 @@ void KQueueDispatcher::registerHandler
 	newKevent->data = 0;
 	newKevent->udata = eh.get();
 	
-	m_eventHandlerMap.insert(std::make_pair(eh.get(), std::make_pair(eh, et)));
+	EventHandlerMap::iterator iter;
+	if ((iter = m_eventHandlerMap.find(eh.get())) != m_eventHandlerMap.end()) {
+		int newEt = iter->second.second | et;
+		debug("actualizando antiguo: %x, %x, %x", iter->second.second, et, newEt);
+		m_eventHandlerMap[eh.get()] = std::make_pair(eh, newEt);
+	} else {
+		m_eventHandlerMap[eh.get()] = std::make_pair(eh, et);
+	}
 }
 
 void KQueueDispatcher::removeHandler
@@ -121,6 +128,16 @@ void KQueueDispatcher::removeHandler
 	m_eventHandlerMap[eh.get()] = std::make_pair(eh, newEventTypes);
 }
 
+void debugKevents(struct kevent* k, int n)
+{
+	struct kevent* ki;
+	
+	for (ki = k; ki < &k[n]; ki++) {
+		debug("kevent: ident %d, filter %x, flags %x, fflags %x, data %d, udata %p",
+			ki->ident, ki->filter, ki->flags, ki->fflags, ki->data, ki->udata);
+	}
+}
+
 void KQueueDispatcher::handleEvents(long timeout)
 {
 	int numEvents;
@@ -138,6 +155,9 @@ void KQueueDispatcher::handleEvents(long timeout)
 		keventTimeout.tv_nsec = msecs * 1000000;
 	}
 	
+	debug("Pre-kevent");
+	debugKevents(m_keventChanges, m_keventUsed);
+	
 	/* Pedimos a KQueue que actualice la lista de eventos y que nos devuelva los
 	   que se hallan generado durante el timeout */
 	numEvents = kevent(
@@ -149,6 +169,9 @@ void KQueueDispatcher::handleEvents(long timeout)
 		timeout != -1 ? &keventTimeout : NULL
 	);
 	m_keventUsed = 0;
+	
+	debug("Post-kevent");
+	debugKevents(m_keventList, numEvents);
 		
 	if (numEvents == -1)
 		fatal("Error en kevent(): %s", strerror(errno));
@@ -174,37 +197,53 @@ void KQueueDispatcher::handleEvents(long timeout)
 		
 		if (activeKevent->flags == EV_ERROR) {
 			error("en kevent: %s", strerror(activeKevent->data));
+			continue;
 		}
+		
+		debug("a ver que podemos hacer...");
 		
 		EventHandlerPair ehp =
 			m_eventHandlerMap[(EventHandler*) activeKevent->udata];
 		
-		if (activeKevent->filter & EVFILT_READ) {
+		if (activeKevent->flags & EV_EOF &&
+			ehp.second & CLOSE_EVENT) {
+			ehp.first->handleClose(self);
+			continue;
+		}
+		
+		if (activeKevent->filter == EVFILT_READ) {
+			debug("Parece que podemos leer...");
 			struct sockaddr remoteAddress;
 			socklen_t remoteAddressSize = sizeof(struct sockaddr);
 			memset(&remoteAddress, 0, remoteAddressSize);
 			
 			// Comprobamos si el socket está escuchando
+			debug("!! %x & %x = %x", ehp.second, READ_EVENT, ehp.second & READ_EVENT);
 			if (getpeername(
 					activeKevent->ident,
 					&remoteAddress,
 					&remoteAddressSize) == -1) {
+				debug("%x & %x = %x", ehp.second, ACCEPT_EVENT, ehp.second & ACCEPT_EVENT);
 				if (ehp.second & ACCEPT_EVENT) {
+					debug("Hemos aceptado");
 					ehp.first->handleAccept(self);
+					continue;
 				}
 			} else if (ehp.second & READ_EVENT) {
+				debug("Hemos leido");
 				ehp.first->handleRead(self);
+				continue;
 			}
 		}
 		
-		if (activeKevent->filter & EVFILT_WRITE &&
+		debug("activeKevent->filter == EVFILT_WRITE :: %d == %d", activeKevent->filter, EVFILT_WRITE);
+		debug("ehp.second & WRITE_EVENT :: %x & %x = %x", ehp.second, WRITE_EVENT, ehp.second & WRITE_EVENT);
+		if (activeKevent->filter == EVFILT_WRITE &&
 			ehp.second & WRITE_EVENT) {
+			debug("se pueden escribir %d bytes", activeKevent->data);
 			ehp.first->handleWrite(self);
+			continue;
 		}
-		
-		if (activeKevent->flags & EV_EOF &&
-			ehp.second & CLOSE_EVENT) {
-			ehp.first->handleClose(self);
-		}
+		fatal("No hemos podido hacer nada?");
 	}
 }

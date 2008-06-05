@@ -65,7 +65,8 @@ void ListenEventHandler::handleAccept
 	boost::shared_ptr<ClientEventHandler> handler(
 			new ClientEventHandler(m_server, connection));
 		
-	dispatcher->registerHandler(handler, READ_EVENT | WRITE_EVENT | CLOSE_EVENT);
+	dispatcher->registerHandler(handler, READ_EVENT | CLOSE_EVENT);
+	dispatcher->registerHandler(handler, WRITE_EVENT | CLOSE_EVENT);
 }
 
 void ListenEventHandler::handleClose
