@@ -1,5 +1,6 @@
 #include "CusterServer.h"
 #include "ListenEventHandler.h"
+#include "DirectorySender.h"
 
 #include <boost/filesystem/operations.hpp>
 
@@ -8,11 +9,11 @@ using namespace custer;
 namespace bfs = boost::filesystem;
 
 CusterServer::CusterServer(uint16_t port, std::string directory) :
-	m_port(port),
-	m_directory(directory)
+	m_port(port)
 {
-	debug("Directorio '%s'",
-		bfs::system_complete(m_directory).normalize().string().c_str());
+	DirectorySender::initializeMimeTypes();
+	m_directorySender = boost::shared_ptr<DirectorySender>(
+		new DirectorySender(directory));
 	
 	m_dispatcher = boost::shared_ptr<Dispatcher>(new Dispatcher());
 }

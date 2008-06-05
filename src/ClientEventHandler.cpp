@@ -1,16 +1,14 @@
 #include "ClientEventHandler.h"
 #include "const.h"
+#include "CusterServer.h"
 #include "HttpRequest.h"
+#include "HttpResponse.h"
+#include "DirectorySender.h"
 
 #include <cstring>
 #include <cerrno>
 
 using namespace custer;
-
-static char* response =
-"HTTP/1.0 200 OK\r\n"
-"Connection: close\r\n\r\n"
-"Esto es una prueba.\r\n";
 
 // TODO: VALIDATE_LENGTH en todos estas funciones
 void request_method_cb(void* data, const char* at, size_t length)
@@ -100,6 +98,7 @@ ClientEventHandler::ClientEventHandler(
 {
 	debug("ClientEventHandler::constructor");
 	m_handle = connection;
+	m_directorySender = m_server->getDirectorySender();
 	m_data = (char *) xmalloc(HTTP_MAX_HEADER * sizeof(char));
 	m_parser = (http_parser*) xmalloc(sizeof(http_parser));
 	m_params = boost::shared_ptr<ParamsMap>(new ParamsMap());
@@ -116,16 +115,14 @@ ClientEventHandler::ClientEventHandler(
 	http_parser_init(m_parser);
 }
 
-static unsigned int bufferSize = CHUNK_SIZE;
-
 void ClientEventHandler::handleRead(boost::shared_ptr<IDispatcher> dispatcher)
 {
 	debug("ClientEventHandler::handleRead");
 		
-	char buffer[bufferSize];
+	char buffer[CHUNK_SIZE];
 	int n;
 		
-	if ((n = read(m_handle, buffer, bufferSize)) == -1) {
+	if ((n = read(m_handle, buffer, CHUNK_SIZE)) == -1) {
 		error("Error leyendo de socket: %s", strerror(errno));
 		unregister(dispatcher);
 	} else if (n == 0) {
@@ -160,18 +157,14 @@ void ClientEventHandler::handleRead(boost::shared_ptr<IDispatcher> dispatcher)
 				error("Sin REQUEST_PATH");
 				unregister(dispatcher);
 			}
-			
-			// FIX: SCRIPT_NAME y PATH_INFO?
-			
+						
 			// TODO: REMOTE_ADDR
 			
 			m_request = boost::shared_ptr<HttpRequest>(
 				new HttpRequest(m_params));
-			
-			
-			// TODO break if body == NULL
-			
-			// unregister(dispatcher);
+			// FIX: SCRIPT_NAME y PATH_INFO
+			m_request->setParam(HTTP_SCRIPT_NAME, HTTP_SLASH);
+			m_request->setParam(HTTP_PATH_INFO, (*m_params)[HTTP_REQUEST_URI]);
 		}
 	}
 }
@@ -180,9 +173,16 @@ void ClientEventHandler::handleWrite(boost::shared_ptr<IDispatcher> dispatcher)
 {
 	debug("ClientEventHandler::handleWrite");
 	
+	// Si el request está completo podemos escribir
 	if (m_request->isComplete()) {
-		write(m_handle, response, strlen(response));
-		unregister(dispatcher);
+		if (!m_response) {
+			m_response = boost::shared_ptr<HttpResponse>(
+				new HttpResponse(m_handle));
+			
+			m_directorySender->process(m_request, m_response);
+		}
+		
+		m_response->handleWrite();
 	}
 }
 

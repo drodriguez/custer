@@ -12,6 +12,8 @@
 
 NS_CUSTER_BEGIN
 
+class DirectorySender;
+
 class CusterServer : public boost::enable_shared_from_this<CusterServer>
 {
 public:
@@ -32,12 +34,13 @@ public:
 	unsigned int getPort() { return m_port; }
 	
 	/**
-	 * Devuelve el directorio que se sirve.
+	 * Devuelve el manejador de envio de archivos del directorio base.
 	 *
-	 * @return El directorio que se sirve.
+	 * @return El manejador de envio de archivos del directorio base.
 	 */
-	std::string getDirectory() { return m_directory.string(); }
-	
+	boost::shared_ptr<DirectorySender> getDirectorySender()
+		{ return m_directorySender; }
+		
 	/**
 	 * Ejecuta el servidor.
 	 */
@@ -46,9 +49,9 @@ public:
 private:
 	/** Puerto en el que se escucha */
 	unsigned int m_port;
-	
-	/** Directorio que se sirve */
-	boost::filesystem::path m_directory;
+		
+	/** Maneja el envio de los archivos del directorio base */
+	boost::shared_ptr<DirectorySender> m_directorySender;
 	
 	/** Dispatcher que gestiona las conexiones de este servidor */
 	boost::shared_ptr<Dispatcher> m_dispatcher;

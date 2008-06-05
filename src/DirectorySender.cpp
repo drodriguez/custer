@@ -1,4 +1,7 @@
 #include "DirectorySender.h"
+#include "HttpRequest.h"
+#include "HttpResponse.h"
+#include "const.h"
 
 #include <boost/filesystem.hpp>
 #include <boost/algorithm/string.hpp>
@@ -10,9 +13,58 @@ namespace ba = boost::algorithm;
 static std::string defaultContentType("application/octet-stream");
 static std::string onlyHeadOrGet("Only HEAD and GET allowed.");
 
+extern std::map<std::string, std::string> DirectorySender::s_mimeTypes;
+
+void DirectorySender::initializeMimeTypes()
+{
+	s_mimeTypes[".atom"]  = "application/atom+xml";
+	s_mimeTypes[".avi"]   = "video/avi";
+	s_mimeTypes[".bmp"]   = "image/bmp";
+	s_mimeTypes[".bz2"]   = "application/x-bzip2";
+	s_mimeTypes[".c"]     = "text/plain";
+	s_mimeTypes[".class"] = "application/java";
+	s_mimeTypes[".cpp"]   = "text/x-c";
+	s_mimeTypes[".css"]   = "text/css";
+	s_mimeTypes[".doc"]   = "application/msword";
+	s_mimeTypes[".exe"]   = "application/octet-stream";
+	s_mimeTypes[".flv"]   = "video/x-flv";
+	s_mimeTypes[".gif"]   = "image/gif";
+	s_mimeTypes[".gz"]    = "application/x-compressed";
+	s_mimeTypes[".gzip"]  = "application/x-gzip";
+	s_mimeTypes[".h"]     = "text/plain";
+	s_mimeTypes[".htm"]   = "text/html";
+	s_mimeTypes[".html"]  = "text/html";
+	s_mimeTypes[".ico"]   = "image/x-icon";
+	s_mimeTypes[".jar"]   = "application/java-archive";
+	s_mimeTypes[".java"]  = "text/plain";
+	s_mimeTypes[".jpeg"]  = "image/jpeg";
+	s_mimeTypes[".jpg"]   = "image/jpeg";
+	s_mimeTypes[".js"]    = "application/x-javascript";
+	s_mimeTypes[".mid"]   = "audio/midi";
+	s_mimeTypes[".midi"]  = "audio/midi";
+	s_mimeTypes[".mov"]   = "video/quicktime";
+	s_mimeTypes[".mp3"]   = "audio/mpeg";
+	s_mimeTypes[".mpg"]   = "video/mpeg";
+	s_mimeTypes[".mpeg"]  = "video/mpeg";
+	s_mimeTypes[".pdf"]   = "application/pdf";
+	s_mimeTypes[".png"]   = "image/png";
+	s_mimeTypes[".ppt"]   = "application/mspowerpoint";
+	s_mimeTypes[".rar"]   = "application/x-rar-compressed";
+	s_mimeTypes[".rss"]   = "text/xml";
+	s_mimeTypes[".txt"]   = "text/plain";
+	s_mimeTypes[".tgz"]   = "application/x-compressed";
+	s_mimeTypes[".vcf"]   = "text/x-vcard";
+	s_mimeTypes[".vcs"]   = "text/x-vcalendar";
+	s_mimeTypes[".wav"]   = "audio/wav";
+	s_mimeTypes[".xhtml"] = "application/xhtml+xml";
+	s_mimeTypes[".xls"]   = "application/excel";
+	s_mimeTypes[".xml"]   = "text/xml";
+	s_mimeTypes[".zip"]   = "application/zip";
+}
+
 DirectorySender::DirectorySender(
 	std::string directory,
-	bool allowListing = true,
+	bool allowListing,
 	std::string indexFile) :
 	m_directory(directory),
 	m_allowListing(allowListing),
@@ -21,15 +73,15 @@ DirectorySender::DirectorySender(
 	m_directory = bfs::system_complete(m_directory);
 }
 
-boost::filesystem::path DirectoryServer::canServe(std::string pathInfo)
+boost::filesystem::path DirectorySender::canServe(std::string pathInfo)
 {
-	std::string requestPathStr = HttpRequest.unescape(pathInfo);
+	std::string requestPathStr = HttpRequest::unescape(pathInfo);
 	// Lo completamos con el directorio base
 	bfs::path requestPath = m_directory / requestPathStr;
 	requestPath = bfs::system_complete(requestPath);
 	
 	// Comprobamos que esté dentro del directorio base
-	if (requestPath.string().index(m_directory.string()) == 0 &&
+	if (ba::starts_with(requestPath.string(), m_directory.string()) &&
 		bfs::exists(requestPath)) {
 		// Existe y está en una localización permitida
 		if (bfs::is_directory(requestPath)) {
@@ -66,9 +118,9 @@ void DirectorySender::sendDirectoryListing(
 		ba::erase_tail(cleanBase, 1);
 	}
 	
-	if (m_listing_allowed) {
+	if (m_allowListing) {
 		response->setStatus(HTTP_STATUS_OK);
-		response->headers[HTTP_CONTENT_TYPE] = "text/html";
+		response->setHeader(HTTP_CONTENT_TYPE, "text/html");
 		response->out << "<html><head><title>Directory listing</title></head><body>";
 		
 		bfs::directory_iterator endIter;
@@ -80,10 +132,10 @@ void DirectorySender::sendDirectoryListing(
 				response->out << "</a></br />";
 		}
 		
-		response->out << "</body></html>"
+		response->out << "</body></html>";
 		response->send();
 	} else {
-		response->setStatus(HTTP_STATUS_NOT_ALLOWED);
+		response->setStatus(HTTP_STATUS_FORBIDDEN);
 		response->out << "Directory listings not allowed";
 		response->send();
 	}
@@ -91,19 +143,28 @@ void DirectorySender::sendDirectoryListing(
 
 void DirectorySender::sendFile(
 	boost::filesystem::path requestPath,
-	boost::shared_ptr<HttpResquest> request,
+	boost::shared_ptr<HttpRequest> request,
 	boost::shared_ptr<HttpResponse> response,
 	bool headerOnly)
 {
 	response->setStatus(HTTP_STATUS_OK);
-	// TODO: establecer el MIME-Type basandose en la extensión
-	response->header[HTTP_CONTENT_TYPE] = defaultContentType;
 	
-	// TODO: enviar ¿status? con content-length
+	std::string extension = bfs::extension(requestPath);
+	if (extension.empty()) {
+		response->setHeader(HTTP_CONTENT_TYPE, defaultContentType);
+	} else {
+		std::map<std::string, std::string>::iterator iter;
+		if ((iter = s_mimeTypes.find(extension)) != s_mimeTypes.end()) {
+			response->setHeader(HTTP_CONTENT_TYPE, s_mimeTypes[extension]);
+		} else {
+			response->setHeader(HTTP_CONTENT_TYPE, defaultContentType);
+		}
+	}
+	
+	response->sendStatus(bfs::file_size(requestPath));
 	response->sendHeaders();
 	if (!headerOnly) {
-		// TODO: enviar el fichero
-		// response->sendFile(requestPath, )
+		response->sendFile(requestPath);
 	}
 	response->send();
 }
@@ -116,6 +177,7 @@ void DirectorySender::process(
 	bfs::path requestPath = canServe(request->getPathInfo());
 	
 	if (requestPath.empty()) {
+		debug("Request Path vacio");
 		response->setStatus(HTTP_STATUS_NOT_FOUND);
 		response->out << "Not found";
 		response->send();
@@ -125,9 +187,9 @@ void DirectorySender::process(
 				request->getRequestURI(),
 				requestPath,
 				response);
-		} else if (requestMethod == HTTP_REQUEST_METHOD_HEAD) {
+		} else if (requestMethod == HttpRequest::GET) {
 			sendFile(requestPath, request, response, true);
-		} else if (requestMethod == HTTP_REQUEST_METHOD_GET) {
+		} else if (requestMethod == HttpRequest::HEAD) {
 			sendFile(requestPath, request, response, false);
 		} else {
 			response->setStatus(HTTP_STATUS_METHOD_NOT_ALLOWED);

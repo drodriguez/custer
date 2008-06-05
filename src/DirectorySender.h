@@ -7,9 +7,17 @@
 
 NS_CUSTER_BEGIN
 
+class HttpRequest;
+class HttpResponse;
+
 class DirectorySender
 {
 public:
+	/**
+	 * Inicializa los MIME-Types
+	 */
+	static void initializeMimeTypes();
+	
 	/**
 	 * Constructor para que se envien los archivos del directorio indicado.
 	 *
@@ -22,7 +30,7 @@ public:
 	DirectorySender(
 		std::string directory,
 		bool allowListing = true,
-		std::string indexFile);
+		std::string indexFile = "index.html");
 	
 	/**
 	 * Procesa una petición HTTP y almacena su respuesta para ser enviada.
@@ -65,8 +73,9 @@ private:
 	 */
 	void sendFile(
 		boost::filesystem::path requestPath,
-		boost::shared_ptr<HttpResquest> request,
-		boost::shared_ptr<HttpResponse> response);
+		boost::shared_ptr<HttpRequest> request,
+		boost::shared_ptr<HttpResponse> response,
+		bool headerOnly = false);
 		
 	
 	/** Indica si se permiten los listados de los directorios */
@@ -77,6 +86,9 @@ private:
 	
 	/** Nombre del archivo índice */
 	boost::filesystem::path m_indexFile;
+	
+	/** Una relación de extensiones con MIME-Types */
+	static std::map<std::string, std::string> s_mimeTypes;
 };
 
 NS_CUSTER_END

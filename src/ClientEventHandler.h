@@ -11,6 +11,8 @@
 NS_CUSTER_BEGIN
 
 class CusterServer;
+class HttpResponse;
+class DirectorySender;
 
 class ClientEventHandler : public EventHandler
 {
@@ -38,6 +40,9 @@ private:
 	/** Servidor al que pertenece el ClientEventHandler */
 	boost::shared_ptr<CusterServer> m_server;
 	
+	/** Maneja el envio de archivos desde el directorio base */
+	boost::shared_ptr<DirectorySender> m_directorySender;
+	
 	/** Bytes ya parseados */
 	int m_nparsed;
 	
@@ -53,9 +58,12 @@ private:
 	/** Parámetros HTTP */
 	boost::shared_ptr<ParamsMap> m_params;
 	
-	/** Request HTTP */
+	/** Petición HTTP */
 	boost::shared_ptr<HttpRequest> m_request;
 	
+	/** Respuesta HTTP */
+	boost::shared_ptr<HttpResponse> m_response;
+		
 	/**
 	 * Cierra la conexión asociada y se desregistra del dispatcher parámetro.
 	 *
