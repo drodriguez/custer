@@ -131,7 +131,7 @@ public:
 	/**
 	 * Determina si se ha completado la respuesta HTTP.
 	 */
-	bool done() { return m_bodySent && m_headersSent && m_statusSent; }
+	bool done() { return m_done; }
 	
 	/** Stream donde se mantiene el contenido de la respuesta */
 	std::stringstream out;
@@ -158,6 +158,9 @@ private:
 	
 	/** Indica si el código de estado ha sido enviado */
 	bool m_statusSent;
+	
+	/** Indice si se ha terminado de enviar datos */
+	bool m_done;
 	
 	/** La cadena que se envia como mensaje HTTP */
 	std::stringstream m_httpMessage;

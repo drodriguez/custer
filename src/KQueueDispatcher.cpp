@@ -50,6 +50,7 @@ void KQueueDispatcher::resizeKeventsVectors()
 {
 	// Si el vector de kevents está lleno...
 	if (m_keventUsed == m_keventSize) {
+		debug("Doblando el tamanio de los vectores a %d", m_keventSize << 1);
 		m_keventSize <<= 1; // ...doblamos su capacidad.
 		m_keventChanges = (struct kevent*) xrealloc(
 			m_keventChanges, m_keventSize * sizeof(struct kevent)
@@ -135,6 +136,12 @@ void KQueueDispatcher::removeHandler
 	if (et == NO_EVENT) return;
 	if (m_eventHandlerMap.find(eh.get()) == m_eventHandlerMap.end()) {
 		error("Intento de eliminar un EventHandler no existente");
+		return;
+	}
+	
+	// Si nos piden todos suponenmos que van a cerrar el socket ellos
+	if (et == ALL_EVENTS) {
+		m_eventHandlerMap.erase(eh.get());
 		return;
 	}
 	

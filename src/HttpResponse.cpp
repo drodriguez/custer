@@ -41,6 +41,7 @@ HttpResponse::HttpResponse(socket_type connection) :
 	m_bodySent(false),
 	m_headersSent(false),
 	m_statusSent(false),
+	m_done(false),
 	m_file()
 {
 	bpt::ptime now = bpt::second_clock::universal_time();
@@ -145,8 +146,8 @@ void HttpResponse::handleWrite()
 	
 	if ((m_file.is_open() && m_file.eof())
 		|| (!m_file.is_open() && out.eof())) {
-		debug("cerrando el socket");
-		close(m_connection);
+		if (m_file.is_open()) m_file.close();
+		m_done = true;
 	}
 }
 

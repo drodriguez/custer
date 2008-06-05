@@ -11,6 +11,8 @@ NS_CUSTER_BEGIN
 class EventHandler : public boost::enable_shared_from_this<EventHandler>
 {
 public:
+	virtual ~EventHandler() {}
+	
 	virtual void handleAccept(boost::shared_ptr<IDispatcher> dispatcher) {}
 	virtual void handleRead(boost::shared_ptr<IDispatcher> dispatcher) {}
 	virtual void handleWrite(boost::shared_ptr<IDispatcher> dispatcher) {}

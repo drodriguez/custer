@@ -115,6 +115,13 @@ ClientEventHandler::ClientEventHandler(
 	http_parser_init(m_parser);
 }
 
+ClientEventHandler::~ClientEventHandler()
+{
+	debug("ClientEventHandler::~ClientEventHandler");
+	if (m_parser) free(m_parser);
+	if (m_data) free(m_data);
+}
+
 void ClientEventHandler::handleRead(boost::shared_ptr<IDispatcher> dispatcher)
 {
 	debug("ClientEventHandler::handleRead");
@@ -147,8 +154,9 @@ void ClientEventHandler::handleRead(boost::shared_ptr<IDispatcher> dispatcher)
 		if (m_nparsed < m_dataLength) {
 			debug("Parseando desde %d hasta %d", m_nparsed, m_dataLength);
 			m_nparsed = http_parser_execute(m_parser, m_data, m_dataLength, m_nparsed);
-		
-			if (http_parser_is_finished(m_parser)) {
+			
+			int parserFinished = http_parser_finish(m_parser);
+			if (parserFinished == 1) {
 				debug("El parser ha finalizado");
 			
 				if (m_params->find(HTTP_REQUEST_PATH) == m_params->end()) {
@@ -162,7 +170,10 @@ void ClientEventHandler::handleRead(boost::shared_ptr<IDispatcher> dispatcher)
 					new HttpRequest(m_params));
 				// FIX: SCRIPT_NAME y PATH_INFO
 				m_request->setParam(HTTP_SCRIPT_NAME, HTTP_SLASH);
-				m_request->setParam(HTTP_PATH_INFO, (*m_params)[HTTP_REQUEST_URI]);			
+				m_request->setParam(HTTP_PATH_INFO, (*m_params)[HTTP_REQUEST_URI]);		
+			} else if (parserFinished == -1) {
+				error("error en la peticion HTTP");
+				closeConnection(dispatcher);
 			}
 		}
 	}
@@ -189,6 +200,10 @@ void ClientEventHandler::handleWrite(boost::shared_ptr<IDispatcher> dispatcher)
 		}
 		
 		m_response->handleWrite();
+		
+		if (m_response->done()) {
+			closeConnection(dispatcher);
+		}
 	}
 }
 
@@ -204,5 +219,7 @@ void ClientEventHandler::closeConnection(boost::shared_ptr<IDispatcher> dispatch
 	// Al cerrar un descriptor los kevents asociados se destruyen, si le
 	// pedimos eliminarlo y luego lo cerramos se produce un error al invocar
 	// a kevent.
+	boost::shared_ptr<EventHandler> self(shared_from_this());
+	dispatcher->removeHandler(self, ALL_EVENTS);
 	close(m_handle);
 }

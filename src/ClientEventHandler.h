@@ -27,6 +27,9 @@ public:
 		boost::shared_ptr<CusterServer> server,
 		socket_type connection);
 	
+	/** Destructor */
+	virtual ~ClientEventHandler();
+	
 	// heredado de EventHandler
 	void handleRead(boost::shared_ptr<IDispatcher>  dispatcher);
 	
