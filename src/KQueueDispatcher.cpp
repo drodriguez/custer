@@ -110,16 +110,16 @@ void KQueueDispatcher::modifyKevents(
 		 */
 		if (et & ACCEPT_EVENT) {
 			newKevent->filter = EVFILT_READ;
-			et &= !(ACCEPT_EVENT | CLOSE_EVENT);
+			et &= ~(ACCEPT_EVENT | CLOSE_EVENT);
 		} else if (et & READ_EVENT) {
 			newKevent->filter = EVFILT_READ;
-			et &= !(READ_EVENT | CLOSE_EVENT);
+			et &= ~(READ_EVENT | CLOSE_EVENT);
 		} else if (et & WRITE_EVENT) {
 			newKevent->filter = EVFILT_WRITE;
-			et &= !(WRITE_EVENT | CLOSE_EVENT);
+			et &= ~(WRITE_EVENT | CLOSE_EVENT);
 		} else if (et & CLOSE_EVENT) {
 			newKevent->filter = EVFILT_WRITE;
-			et &= !CLOSE_EVENT;
+			et &= ~CLOSE_EVENT;
 		} else {
 			error("Evento desconocido");
 			newKevent->filter = 0;
@@ -152,7 +152,7 @@ void KQueueDispatcher::removeHandler
 	modifyKevents(et, eh->getHandle(), EV_DELETE, NULL);
 	
 	// Calculamos el resultado de los eventos antiguos y los nuevos
-	unsigned int newEventTypes =  ehp.second & !et;
+	unsigned int newEventTypes =  ehp.second & ~et;
 	
 	// Si el resultado acaba siendo ningún evento, eliminados el EventHandler
 	if (newEventTypes == NO_EVENT) {
