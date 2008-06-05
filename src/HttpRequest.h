@@ -18,7 +18,7 @@ class HttpRequest
 public:
 	
 	/** Métodos HTTP (1.0) */
-	enum Methods {
+	enum Method {
 		GET,
 		POST,
 		PUT,
@@ -57,11 +57,54 @@ public:
 	boost::shared_ptr<ParamsMap> getParams() { return m_params; }
 	
 	/**
+	 * Establece un nuevo párametro de la petición.
+	 *
+	 * @param key Nombre de la clave para el parámetro.
+	 * @param value Valor del parámetro.
+	 */
+	void setParam(std::string key, std::string value);
+	
+	/**
 	 * Devuelve el cuerpo de esta petición.
 	 *
 	 * @return El cuerpo de esta petición.
 	 */
 	const std::stringstream& getBody() { return m_body; }
+	
+	/**
+	 * Devuelve el método de la petición.
+	 *
+	 * @return El método de la petición.
+	 */
+	Method getRequestMethod();
+	
+	/**
+	 * Devuelve la URI de la petición.
+	 *
+	 * @return la URI de la petición.
+	 */
+	std::string getRequestURI();
+	
+	/**
+	 * Devuelve el path de la petición.
+	 *
+	 * @return el path de la petición.
+	 */
+	std::string getRequestPath();
+	
+	/**
+	 * Devuelve el script de la petición.
+	 *
+	 * @return el script de la petición.
+	 */
+	std::string getScriptName();
+	
+	/**
+	 * Devuelve la información del path de la petición.
+	 *
+	 * @return la información del path de la petición.
+	 */
+	std::string getPathInfo();
 	
 	/**
 	 * Invocado desde los EventHandler para poder recibir más datos, como un

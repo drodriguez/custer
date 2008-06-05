@@ -30,12 +30,49 @@ HttpRequest::HttpRequest(
 	m_body << body;
 }
 
+void HttpRequest::setParam(std::string key, std::string value)
+{
+	(*m_params)[key] = value;
+}
+
+HttpRequest::Method HttpRequest::getRequestMethod()
+{
+	std::string& rm = (*m_params)[HTTP_REQUEST_METHOD];
+	
+	if      (rm == "GET")    return GET;
+	else if (rm == "POST")   return POST;
+	else if (rm == "PUT")    return PUT;
+	else if (rm == "DELETE") return DELETE;
+	else if (rm == "HEAD")   return HEAD;
+	else                     return GET; // FIX: Mejor peor elección
+}
+
+std::string HttpRequest::getRequestURI()
+{
+	return (*m_params)[HTTP_REQUEST_URI];
+}
+
+std::string HttpRequest::getRequestPath()
+{
+	return (*m_params)[HTTP_REQUEST_PATH];
+}
+
+std::string HttpRequest::getScriptName()
+{
+	return (*m_params)[HTTP_SCRIPT_NAME];
+}
+
+std::string HttpRequest::getPathInfo()
+{
+	return (*m_params)[HTTP_PATH_INFO];
+}
+
 void HttpRequest::handleRead(const char* buffer, size_t length)
 {
 	if (m_remain > 0) {
 		m_body << std::string(buffer, length);
 		m_remain -= length;
-		debug("Aun queda %d bytes por recibir", m_remain);
+		debug("Aun quedan %d bytes por recibir", m_remain);
 	}
 }
 
