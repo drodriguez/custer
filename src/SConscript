@@ -8,7 +8,7 @@ if env['PLATFORM'] == 'darwin': # Mac OS X, incluimos rutas de MacPorts
 
 env.Append(CCFLAGS = '-g')
 
-if not env.WhereIs('ragel'):
+if env.WhereIs('ragel'):
 	print "Ragel encontrado"
 	ragel = Builder(action = 'ragel -C -o ${TARGET.abspath} ${SOURCE.file}', chdir=1)
 	env.Append(BUILDERS = {'Ragel' : ragel})
