@@ -76,91 +76,72 @@ void HttpRequest::handleRead(const char* buffer, size_t length)
 	}
 }
 
-// A partir de aquí los métodos estáticos
-// Cosas complicadas de comprender con el API de Regex de Boost.
-
-class RegexFunction
-{
-public:
-	RegexFunction(std::string * s);
-	bool operator()(const boost::match_results<std::string::const_iterator>& what);
-	virtual std::string gsub(const boost::match_results<std::string::const_iterator>& what) = 0;
-	std::string getResult();
-
-protected:
-	std::string m_result;
-	
-private:
-	std::string* m_s;
-	std::string::iterator m_pos;
-};
-
-RegexFunction::RegexFunction(std::string* s) :
-	m_s(s), m_result()
-{
-	m_pos = m_s->begin();
-}
-
-bool RegexFunction::operator()(const boost::match_results<std::string::const_iterator>& what)
-{
-	m_result.insert(m_result.end(), m_pos, m_pos+what.prefix().length());
-	m_result += gsub(what);
-	m_pos += what.prefix().length() + what.length();
-}
-
-std::string RegexFunction::getResult()
-{
-	m_result.insert(m_result.end(), m_pos, m_s->end());
-	return m_result;
-}
-
-class EscapeRegexFunction : public RegexFunction
-{
-public:
-	EscapeRegexFunction(std::string* s) : RegexFunction(s) {};
-	std::string gsub(const boost::match_results<std::string::const_iterator>& what)
-	{
-		std::stringstream result;
-		result << std::hex;
-		std::string characters = what[1].str();
-		std::string::const_iterator iter;
-		for (iter = characters.begin(); iter != characters.end(); ++iter) {
-			result << "%" << static_cast<short>(*iter);
-		}
-		return result.str();
-	}
-};
-
-class UnescapeRegexFunction : public RegexFunction
-{
-public:
-	UnescapeRegexFunction(std::string* s) : RegexFunction(s) {};
-	std::string gsub(const boost::match_results<std::string::const_iterator>& what)
-	{
-		char * end;
-		std::string digits = what[1].str();
-		long int r1 = strtol(digits.c_str(), &end, 16);
-		char r2 = static_cast<char>(r1);
-		return std::string(&r2, 1);
-	}
-};
+static char* dec2hex = "0123456789ABCDEF";
 
 std::string HttpRequest::escape(std::string s)
 {
-	EscapeRegexFunction erf(&s);
-	boost::regex re("([^ a-zA-Z0-9_.-]+)");
-	boost::sregex_iterator iter(s.begin(), s.end(), re);
-	boost::sregex_iterator endIter;
-	std::string result = std::for_each(iter, endIter, erf).getResult();
-	return ba::replace_all_copy(result, " ", "+");
+	std::string result;
+	std::string::iterator lastPos = s.begin();
+	std::string::iterator current = s.begin();
+	
+	while (current != s.end()) {
+		unsigned char c = *current;
+		if ((c >= 'A' && c <= 'Z')
+			|| (c >= 'a' && c <= 'z')
+			|| (c >= '0' && c <= '9')
+			|| c == '_' || c == '.' || c == '-') {
+			++current;
+		} else if (c == ' ') {
+			result.append(lastPos, current);
+			result.append(1, '+');
+			lastPos = ++current;
+		} else {
+			result.append(lastPos, current);
+			result.append(1, '%');
+			result.append(1, dec2hex[c >> 4]);
+			result.append(1, dec2hex[c & 0x0f]);
+			lastPos = ++current;
+		}
+	}
+	
+	result.append(lastPos, s.end());
+	return result;
 }
 
 std::string HttpRequest::unescape(std::string s)
 {
-	std::string st = ba::replace_all_copy(s, "+", " ");
-	boost::regex re("%([0-9a-fA-F]{2})");
-	UnescapeRegexFunction urf(&st);
-	boost::sregex_iterator iter(st.begin(), st.end(), re);
-	boost::sregex_iterator endIter;
-	return std::for_each(iter, endIter, urf).getResult();
+	std::string result;
+	std::string::iterator lastPos = s.begin();
+	std::string::iterator current = s.begin();
+	
+	while (current != s.end()) {
+		unsigned char c = *current;
+		if (c == '+') {
+			result.append(lastPos, current);
+			result.append(1, ' ');
+			lastPos = ++current;
+		} else if (c == '%') {
+			unsigned char c1 = *(current+1);
+			unsigned char c2 = *(current+2);
+			
+			if (isxdigit(c1) && isxdigit(c2)) {
+				char nc = 0;
+				if (c1 >> 6) nc += 0x09;
+				nc += c1 & 0x0F;
+				nc <<= 4;
+				if (c2 >> 6) nc += 0x09;
+				nc += c2 & 0x0F;
+				result.append(lastPos, current);
+				result.append(1, nc);
+				lastPos = ++ ++ ++current;
+			} else {
+				++current;
+			}
+		} else {
+			++current;
+		}
+	}
+	
+	result.append(lastPos, s.end());
+	return result;
 }
