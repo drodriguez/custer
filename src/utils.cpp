@@ -12,13 +12,13 @@ static void vlog(char* fmt, va_list ap)
 	fputc('\n', stderr);
 }
 
-#define FATAL_MSG "FATAL"
-#define ERROR_MSG "ERROR"
-#define WARN_MSG  "WARN "
-#define INFO_MSG  "INFO "
-#define DEBUG_MSG "DEBUG"
+#define LOG_FATAL_MSG "FATAL"
+#define LOG_ERROR_MSG "ERROR"
+#define LOG_WARN_MSG  "WARN "
+#define LOG_INFO_MSG  "INFO "
+#define LOG_DEBUG_MSG "DEBUG"
 
-unsigned int logLevel = WARN;
+unsigned int logLevel = LOG_WARN;
 
 #define LOG_WITH_LEVEL(x) \
 	if (logLevel < (x)) return; \
@@ -30,28 +30,28 @@ unsigned int logLevel = WARN;
 
 void fatal(char* fmt, ...)
 {
-	LOG_WITH_LEVEL(FATAL)
+	LOG_WITH_LEVEL(LOG_FATAL)
 	exit(-1);
 }
 
 void error(char* fmt, ...)
 {
-	LOG_WITH_LEVEL(ERROR)
+	LOG_WITH_LEVEL(LOG_ERROR)
 }
 
 void warn(char* fmt, ...)
 {
-	LOG_WITH_LEVEL(WARN)
+	LOG_WITH_LEVEL(LOG_WARN)
 }
 
 void info(char* fmt, ...)
 {
-	LOG_WITH_LEVEL(INFO)
+	LOG_WITH_LEVEL(LOG_INFO)
 }
 
 void debug(char* fmt, ...)
 {
-	LOG_WITH_LEVEL(DEBUG)
+	LOG_WITH_LEVEL(LOG_DEBUG)
 }
 
 void* xmalloc(unsigned long size)

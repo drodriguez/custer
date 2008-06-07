@@ -138,7 +138,7 @@ void HttpResponse::handleWrite()
 	}
 	debug("leidos %d bytes", nr);
 	
-	if ((nw = write(m_connection, buffer, nr)) == -1) {
+	if ((nw = socketWrite(m_connection, buffer, nr)) == SOCKET_ERROR) {
 		fatal("escribiendo en el socket: %s", strerror(errno));
 	}
 	

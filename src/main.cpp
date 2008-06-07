@@ -36,10 +36,10 @@ int main(int argc, char* argv[])
 	}
 	
 	if (cmdline_variables.count("verbose")) {
-		logLevel = INFO;
+		logLevel = LOG_INFO;
 	}
 	if (cmdline_variables.count("debug")) {
-		logLevel = DEBUG;
+		logLevel = LOG_DEBUG;
 	}
 	
 	uint16_t port = cmdline_variables["port"].as<int>();

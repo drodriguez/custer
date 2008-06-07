@@ -5,9 +5,6 @@
 #include <cstring>
 #include <cerrno>
 
-#include <netinet/in.h>
-#include <sys/socket.h>
-
 #define BACKLOG 32
 
 using namespace custer;
@@ -25,7 +22,7 @@ ListenEventHandler::ListenEventHandler(
 	if ((m_handle = socket(PF_INET, SOCK_STREAM, 0)) == -1)
 		fatal("creando socket: %s", strerror(errno));
 	
-	if (setsockopt(
+	if (socketSetOpt(
 		m_handle,
 		SOL_SOCKET,
 		SO_REUSEADDR,

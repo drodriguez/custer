@@ -13,7 +13,7 @@ namespace ba = boost::algorithm;
 static std::string defaultContentType("application/octet-stream");
 static std::string onlyHeadOrGet("Only HEAD and GET allowed.");
 
-extern std::map<std::string, std::string> DirectorySender::s_mimeTypes;
+std::map<std::string, std::string> DirectorySender::s_mimeTypes;
 
 void DirectorySender::initializeMimeTypes()
 {

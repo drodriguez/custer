@@ -8,9 +8,6 @@
 #include <cstring>
 #include <cerrno>
 
-#include <sys/socket.h>
-#include <netinet/in.h>
-
 using namespace custer;
 
 // TODO: VALIDATE_LENGTH en todos estas funciones
@@ -132,7 +129,7 @@ void ClientEventHandler::handleRead(boost::shared_ptr<IDispatcher> dispatcher)
 	char buffer[CHUNK_SIZE];
 	int n;
 		
-	if ((n = read(m_handle, buffer, CHUNK_SIZE)) == -1) {
+	if ((n = socketRead(m_handle, buffer, CHUNK_SIZE)) == SOCKET_ERROR) {
 		error("Error leyendo de socket: %s", strerror(errno));
 		closeConnection(dispatcher);
 	} else if (n == 0) {
@@ -243,5 +240,5 @@ void ClientEventHandler::closeConnection(boost::shared_ptr<IDispatcher> dispatch
 	// a kevent.
 	boost::shared_ptr<EventHandler> self(shared_from_this());
 	dispatcher->removeHandler(self, ALL_EVENTS);
-	close(m_handle);
+	socketClose(m_handle);
 }
