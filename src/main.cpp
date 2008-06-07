@@ -50,6 +50,7 @@ int main(int argc, char* argv[])
 	boost::shared_ptr<custer::CusterServer> custerServer(
 		new custer::CusterServer(port, directory));
 	
+	std::cout << "Iniciando servidor..." << std::endl;
 	custerServer->run();
 	
 	return 0;

@@ -2,6 +2,7 @@
 #define HTTPRESPONSE_H
 
 #include "custer.h"
+#include "HttpRequest.h"
 
 #include <boost/filesystem.hpp>
 
@@ -24,7 +25,7 @@ public:
 	 * @param connection El socket que se utilizará para trasmitir datos al
 	 *                   cliente.
 	 */
-	HttpResponse(socket_type connection);
+	HttpResponse(socket_type connection, boost::shared_ptr<ParamsMap> params);
 	
 	/**
 	 * Envia los datos que sean necesarios enviar al cliente.
@@ -140,6 +141,9 @@ private:
 	/** La conexión utilizada para comunicarse con el cliente. */
 	socket_type m_connection;
 	
+	/** Los parámetros de la petición */
+	boost::shared_ptr<ParamsMap> m_params;
+	
 	/** El código de estado que se enviará */
 	unsigned short m_status;
 	
@@ -167,6 +171,9 @@ private:
 	
 	/** El fichero que se puede enviar */
 	std::ifstream m_file;
+	
+	/** Longitud de los datos enviados (real, no la indicada) */
+	long int m_contentSize;
 };
 
 NS_CUSTER_END

@@ -35,14 +35,18 @@ static std::string toHTTPDate(boost::posix_time::ptime time)
 	return s.str();
 }
 
-HttpResponse::HttpResponse(socket_type connection) :
+HttpResponse::HttpResponse(
+	socket_type connection,
+	boost::shared_ptr<ParamsMap> params) :
 	m_connection(connection),
+	m_params(params),
 	m_status(HTTP_STATUS_NOT_FOUND),
 	m_bodySent(false),
 	m_headersSent(false),
 	m_statusSent(false),
 	m_done(false),
-	m_file()
+	m_file(),
+	m_contentSize(0)
 {
 	bpt::ptime now = bpt::second_clock::universal_time();
 	m_headers[HTTP_DATE] = toHTTPDate(now);
@@ -125,10 +129,12 @@ void HttpResponse::handleWrite()
 		debug("Leyendo file");
 		m_file.read(buffer, CHUNK_SIZE);
 		nr = m_file.gcount();
+		m_contentSize += nr;
 	} else if (!m_file.is_open() && !out.eof()){
 		debug("Leyendo out");
 		out.read(buffer, CHUNK_SIZE);
 		nr = out.gcount();
+		m_contentSize += nr;
 	}
 	debug("leidos %d bytes", nr);
 	
@@ -147,6 +153,22 @@ void HttpResponse::handleWrite()
 	if ((m_file.is_open() && m_file.eof())
 		|| (!m_file.is_open() && out.eof())) {
 		if (m_file.is_open()) m_file.close();
+		std::string ra = (*m_params)[HTTP_REMOTE_ADDR];
+		std::string d = m_headers[HTTP_DATE];
+		std::string rm = (*m_params)[HTTP_REQUEST_METHOD];
+		std::string ru = (*m_params)[HTTP_REQUEST_URI];
+		std::string v = (*m_params)[HTTP_VERSION];
+		std::string ua = m_params->find(HTTP_USER_AGENT) != m_params->end() ? (*m_params)[HTTP_USER_AGENT].c_str() : "???";
+		
+		info("%s - [%s] \"%s %s %s\" %d %d \"%s\"",
+			ra.c_str(),
+			d.c_str(),
+			rm.c_str(),
+			ru.c_str(),
+			v.c_str(),
+			m_status,
+			m_contentSize,
+			ua.c_str());
 		m_done = true;
 	}
 }

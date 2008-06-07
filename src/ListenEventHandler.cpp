@@ -46,6 +46,8 @@ ListenEventHandler::ListenEventHandler(
 	
 	if (listen(m_handle, BACKLOG) == -1)
 		fatal("escuchando en el socket: %s", strerror(errno));
+	
+	info("Escuchando conexiones al puerto %d", server->getPort());
 }
 
 void ListenEventHandler::handleAccept

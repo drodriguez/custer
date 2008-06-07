@@ -19,6 +19,7 @@
 
 #define HTTP_CONTENT_TYPE "Content-Type"
 #define HTTP_LAST_MODIFIED "Last-Modified"
+#define HTTP_USER_AGENT "User-Agent"
 #define HTTP_FRAGMENT "Fragment"
 #define HTTP_QUERY_STRING "Query-String"
 #define HTTP_VERSION "Version"

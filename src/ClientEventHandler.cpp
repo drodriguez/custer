@@ -8,6 +8,9 @@
 #include <cstring>
 #include <cerrno>
 
+#include <sys/socket.h>
+#include <netinet/in.h>
+
 using namespace custer;
 
 // TODO: VALIDATE_LENGTH en todos estas funciones
@@ -163,11 +166,30 @@ void ClientEventHandler::handleRead(boost::shared_ptr<IDispatcher> dispatcher)
 					error("Sin REQUEST_PATH");
 					closeConnection(dispatcher);
 				}
-						
-				// TODO: REMOTE_ADDR
-			
+							
 				m_request = boost::shared_ptr<HttpRequest>(
 					new HttpRequest(m_params));
+				
+				struct sockaddr_in remoteAddress;
+				socklen_t remoteAddressSize = sizeof(struct sockaddr_in);
+				memset(&remoteAddress, 0, remoteAddressSize);
+				
+				
+				if (getpeername(m_handle,
+					(struct sockaddr*) &remoteAddress,
+					&remoteAddressSize) == -1) {
+					error("REMOTE_ADDR no encontrada");
+					m_request->setParam(HTTP_REMOTE_ADDR, "???.???.???.???");
+				} else {
+					std::stringstream addr;
+					uint32_t addrv = remoteAddress.sin_addr.s_addr;
+					addr << (addrv       & 0xff) << ".";
+					addr << (addrv >> 8  & 0xff) << ".";
+					addr << (addrv >> 16 & 0xff) << ".";
+					addr << (addrv >> 24       );
+					m_request->setParam(HTTP_REMOTE_ADDR, addr.str());
+				}
+				
 				// FIX: SCRIPT_NAME y PATH_INFO
 				m_request->setParam(HTTP_SCRIPT_NAME, HTTP_SLASH);
 				m_request->setParam(HTTP_PATH_INFO, (*m_params)[HTTP_REQUEST_URI]);		
@@ -194,7 +216,7 @@ void ClientEventHandler::handleWrite(boost::shared_ptr<IDispatcher> dispatcher)
 	if (m_request->isComplete()) {
 		if (!m_response) {
 			m_response = boost::shared_ptr<HttpResponse>(
-				new HttpResponse(m_handle));
+				new HttpResponse(m_handle, m_request->getParams()));
 			
 			m_directorySender->process(m_request, m_response);
 		}
