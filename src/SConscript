@@ -9,7 +9,7 @@ elif env['PLATFORM'] == 'win32':
 	env.Append(CPPPATH = "c:\\programacion\\boost\\boost_1_35_0")
 	env.Append(LIBPATH = "c:\\programacion\\boost\\boost_1_35_0\\lib")
 	env.Append(CCFLAGS = '/MDd /Zi /EHsc')
-	env.Append(CPPDEFINES = ['WIN32','BOOST_ALL_NO_LIB'])
+	env.Append(CPPDEFINES = ['WIN32','BOOST_ALL_NO_LIB', 'BOOST_ALL_DYN_LINK'])
 	env.Append(LINKFLAGS = '/DEBUG /SUBSYSTEM:CONSOLE')
 else:
 	env.Append(CCFLAGS = '-g')
@@ -35,13 +35,6 @@ sources = Split("""
 	http/parser.c
 """)
 
-if env['PLATFORM'] == 'win32':
-	# sources.append("SelectDispatcher.cpp")
-	pass
-elif env['PLATFORM'] == 'darwin':
-	sources.append("KQueueDispatcher.cpp")
-# Que pasa con Linux y BSD? Los dos son 'posix'
-
 includes = Split("""
 	custer.h
 	const.h
@@ -55,28 +48,34 @@ includes = Split("""
 	HttpRequest.h
 	HttpResponse.h
 	IDispatcher.h
-	KQueueDispatcher.h
 	ListenEventHandler.h
 	http/parser.h
 """)
 
 if env['PLATFORM'] == 'win32':
+	sources.append("SelectDispatcher.cpp")
+	includes.append("SelectDispatcher.h")
 	libs = Split("""
+		boost_system-vc80-mt-gd-1_35
 		boost_program_options-vc80-mt-gd-1_35
 		boost_filesystem-vc80-mt-gd-1_35
+		boost_date_time-vc80-mt-gd-1_35
+		ws2_32
 	""")
-else:
+elif env['PLATFORM'] == 'darwin':
+	sources.append("KQueueDispatcher.cpp")
 	libs = Split("""
 		boost_program_options
 		boost_filesystem
 	""")
+# Que pasa con Linux y BSD? Los dos son 'posix'
 
 objects = env.Object(sources)
 program = env.Program('custer', objects, LIBS=libs)
 
-# env.MSVSProject(
+#env.MSVSProject(
 #	target = 'custer' + env['MSVSPROJECTSUFFIX'],
 #	srcs = sources,
 #	incs = includes,
 #	buildtarget = program,
-#	varian = 'Release')
+#	variant = 'Debug')
