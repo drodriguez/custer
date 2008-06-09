@@ -50,6 +50,21 @@ int main(int argc, char* argv[])
 	boost::shared_ptr<custer::CusterServer> custerServer(
 		new custer::CusterServer(port, directory));
 	
+#ifdef WIN32
+	// Inicializamos WinSock
+	WSADATA wsaData;
+	int returnCode;
+	if ((returnCode = WSAStartup(MAKEWORD(2, 2), &wsaData)) != 0) {
+		fatal("Inicializando WinSock 2.2 (codigo: %d)", returnCode);
+	}
+	
+	if (LOBYTE(wsaData.wVersion) != 2 || HIBYTE(wsaData.wVersion) != 2) {
+		WSACleanup();
+		fatal("Version WinSock 2.2 no disponible (version disponible: %d.%d)",
+			LOBYTE(wsaData.wVersion), HIBYTE(wsaData.wVersion));
+	}
+#endif
+	
 	std::cout << "Iniciando servidor..." << std::endl;
 	custerServer->run();
 	
