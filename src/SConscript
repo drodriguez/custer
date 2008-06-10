@@ -20,6 +20,7 @@ sources = Split("""
 	main.cpp
 	CusterServer.cpp
 	ListenEventHandler.cpp
+	parser_callbacks.cpp
 	ClientEventHandler.cpp
 	utils.cpp
 	Dispatcher.cpp
@@ -35,6 +36,7 @@ includes = Split("""
 	const.h
 	platform.h
 	utils.h
+	parser_callbacks.h
 	ClientEventHandler.h
 	CusterServer.h
 	DirectorySender.h
@@ -51,7 +53,6 @@ includes = Split("""
 libs = Split("""
 	boost_program_options
 	boost_filesystem
-	boost_regex
 """)
 
 objects = env.Object(sources)
