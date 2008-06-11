@@ -10,20 +10,6 @@
 
 using namespace custer;
 
-/**
- * Traduce nuestros eventos a los posibles eventos disponibles en KQueue.
- *
- * @param et Los eventos a capturar.
- * @return Los eventos equivalentes en KQueue.
- */
-int translateEvents(unsigned int et) {
-	if (et == NO_EVENT)    return 0;
-	if (et & ACCEPT_EVENT) return EVFILT_READ;
-	if (et & READ_EVENT)   return EVFILT_READ;
-	if (et & WRITE_EVENT)  return EVFILT_WRITE;
-	if (et & CLOSE_EVENT)  return EVFILT_WRITE;
-}
-
 KQueueDispatcher::KQueueDispatcher() :
 	m_eventHandlerMap(),
 	m_keventSize(64), // Inicialmente suponemos 64 descriptores
