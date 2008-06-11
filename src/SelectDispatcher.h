@@ -7,7 +7,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include <map>
-#include <sys/types.h>
+#include <sys/select.h>
 
 NS_CUSTER_BEGIN
 
@@ -41,6 +41,38 @@ private:
 	 * Almacenamos los shared_ptr para que los punteros no sean destruidos.
 	 */
 	EventHandlerMap m_eventHandlerMap;
+	
+	/**
+	 * Bitfield para sockets que serán observados para lecturas.
+	 */
+	fd_set m_readSockets;
+	
+	/**
+	 * Bitfield para sockets que serán observados para lecturas (copia).
+	 */
+	fd_set m_readSocketsCopy;
+	
+	/**
+	 * Bitfield para sockets que serán observador para escrituras.
+	 */
+	fd_set m_writeSockets;
+	
+	/**
+	 * Bitfield para sockets que serán observados para escrituras (copia).
+	 */
+	fd_set m_writeSocketsCopy;
+	
+#ifndef WIN32
+	/*
+	 * Windows no hace caso del parámetro nfds de select(), a pesar de que en
+	 * otras plataformas se utilizan otros dispatchers, por compatibilidad
+	 * implemento como debería funcionar.
+	 */
+	/**
+	 * Conjunto de los descriptores del ficheros utilizados.
+	 */
+	std::set<socket_type> m_sockets;
+#endif
 };
 
 typedef SelectDispatcher NativeDispatcher;

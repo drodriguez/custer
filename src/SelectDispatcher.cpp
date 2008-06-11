@@ -6,8 +6,15 @@ using namespace custer;
 
 SelectDispatcher::SelectDispatcher() :
 	m_eventHandlerMap()
+#ifndef WIN32
+	// Cuidado con esta "comita" de delante.
+	,m_sockets()
+#endif
 {
-	// Nothing
+	FD_ZERO(&m_readSockets);
+	FD_ZERO(&m_readSocketsCopy);
+	FD_ZERO(&m_writeSockets);
+	FD_ZERO(&m_writeSocketsCopy);
 }
 
 SelectDispatcher::~SelectDispatcher()
@@ -23,7 +30,33 @@ void SelectDispatcher::registerHandler
 	// Si no se piden eventos no lo añadimos.
 	if (et == NO_EVENT) return;
 	
-	// TODO
+	socket_type sckt = eh->getHandle();
+	
+#ifndef WIN32
+	// Lo incluimos en el conjunto de sockets
+	m_sockets.insert(sckt);
+#endif
+	
+	// Iteramos por todos los eventos añadiendo el socket a las listas
+	// adecuadas.
+	while (et != NO_EVENT) {
+		if (et & ACCEPT_EVENT) {
+			FD_SET(sckt, &m_readSockets);
+			et &= ~ACCEPT_EVENT;
+		} else if (et & READ_EVENT) {
+			FD_SET(sckt, &m_readSockets);
+			et &= ~READ_EVENT;
+		} else if (et & WRITE_EVENT) {
+			FD_SET(sckt, &m_writeSockets);
+			et &= ~WRITE_EVENT;
+		} else if (et & CLOSE_EVENT) {
+			FD_SET(sckt, &m_readSockets);
+			et &= ~CLOSE_EVENT;
+		} else {
+			error("Evento desconocido");
+			et = NO_EVENT;
+		}
+	}
 		
 	EventHandlerMap::iterator iter;
 	if ((iter = m_eventHandlerMap.find(eh.get())) != m_eventHandlerMap.end()) {
@@ -54,7 +87,32 @@ void SelectDispatcher::removeHandler
 		
 	EventHandlerPair ehp = m_eventHandlerMap[eh.get()];
 	
-	// TODO
+	// Eliminamos el socket de las listas que se indiquen.
+	socket_type sckt = eh->getHandle();
+	unsigned int tempEt = et;
+	while (tempEt !=) {
+		if (tempEt & ACCEPT_EVENT) {
+			FD_CLR(sckt, &m_readSockets);
+			tempEt &= ~ACCEPT_EVENT;
+		} else if (tempEt & READ_EVENT) {
+			FD_CLR(sckt, &m_readSockets);
+			tempEt &= ~READ_EVENT;
+		} else if (et & WRITE_EVENT) {
+			FD_CLR(sckt, &m_writeSockets);
+			tempEt &= ~WRITE_EVENT;
+		} else if (et & CLOSE_EVENT) {
+			FD_CLR(sckt, &m_readSockets);
+			tempEt &= ~CLOSE_EVENT;
+		} else {
+			error("Evento desconocido");
+			tempEt = NO_EVENT;
+		}
+	}
+
+#ifndef WIN32
+	// Lo eliminamos del conjunto de sockets
+	m_sockets.erase(sckt);
+#endif
 	
 	// Calculamos el resultado de los eventos antiguos y los nuevos
 	unsigned int newEventTypes =  ehp.second & ~et;
@@ -71,4 +129,70 @@ void SelectDispatcher::removeHandler
 void SelectDispatcher::handleEvents(long timeout)
 {
 	debug("SelectDispatcher::handleEvents");
+	
+	struct timeval selectTimeout;	
+	if (timeout != -1) {
+		long secs = timeout / 1000;
+		long msecs = timeout % 1000;
+		
+		selectTimeout.tv_sec = secs;
+		selectTimeout.tv_usec = msecs * 1000;
+	}
+	
+	FD_COPY(&m_readSockets, &m_readSocketsCopy);
+	FD_COPY(&m_writeSockets, &m_writeSocketsCopy);
+	
+	/*
+	 * Un std::set tiene sus elementos ordenados de menor a mayor, por lo
+	 * tanto rbegin apunta al mayor elemento del std::set.
+	 */
+	int readySockets = select(
+#ifndef WIN32
+		*m_sockets.rbegin(),
+#else
+		0, // Windows ignora este parámetro
+#endif
+		m_readSocketsCopy,
+		m_writeSocketsCopy,
+		NULL,
+		timeout == -1 ? NULL : &selectTimeout);
+	
+	if (readySockets == SOCKET_ERROR)
+		fatal("Error en select(): %s", strerror(errno));
+	if (readySockets == 0) {
+		debug("No se han recibido eventos, timeout: %d", timeout);
+	}
+	
+	boost::shared_ptr<IDispatcher> self(shared_from_this());
+
+	// Tenemos que copiar los sockets que vigilamos.
+	/*
+	 * En no-Win32 sería más facil empezar en socket = 0 y terminar en el
+	 * máximo socket que le hemos pasado a select().
+	 */
+	std::queue<socket_type> socketQueue;
+	EventHandlerMap::iterator iter;
+	for (iter = m_eventHandlerMap.begin();
+		iter != m_eventHandlerMap.end();
+		++iter) {
+		socketQueue.push(iter->second->getHandle());
+	}
+	
+	while (readySockets > 0 && !socketQueue.empty()) {
+		socket_type actualSocket = socketQueue.front();
+		
+		if (FD_ISSET(actualSocket, &m_readSocketsCopy)) {
+			debug("El socket está en la lista de lectura");
+			
+			readySockets--;
+		}
+		
+		if (FD_ISSET(actualSocket, &m_writeSocketsCopy)) {
+			debug("El socket está en la lista de escritura");
+			
+			readySockets--;
+		}
+		
+		socketQueue.pop();
+	}
 }
