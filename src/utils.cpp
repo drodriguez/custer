@@ -1,8 +1,8 @@
 #include "utils.h"
 
 #include <cstdlib>
-#include <cstdio>
 #include <cstdarg>
+#include <cstdio>
 
 using namespace std;
 

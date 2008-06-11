@@ -4,9 +4,6 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/lexical_cast.hpp>
 
-#include <cerrno>
-#include <cstring>
-
 using namespace custer;
 
 namespace bfs = boost::filesystem;
@@ -138,7 +135,7 @@ void HttpResponse::handleWrite()
 	}
 	debug("leidos %d bytes", nr);
 	
-	if ((nw = send(m_connection, buffer, nr, 0)) == SOCKET_ERROR) {
+	if ((nw = ::send(m_connection, buffer, nr, 0)) == SOCKET_ERROR) {
 		fatal("escribiendo en el socket: %s", strerror(errno));
 	}
 	

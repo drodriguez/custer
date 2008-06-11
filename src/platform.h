@@ -6,17 +6,23 @@
 #  include <sys/socket.h>
 #  include <netinet/in.h>
 #  include <sys/socket.h>
+#  include <cstdio>
+#  include <cerrno>
+#  include <cstring>
 	typedef int socket_type;
 #  define socketClose(s) ::close((s))
 #  define SOCKET_ERROR -1
 #  define socketSetOpt(s,l,n,v,sz) ::setsockopt((s),(l),(n),(v),(sz))
-#  include "KQueueDispatcher.h"
+#  include "SelectDispatcher.h"
 
 #elif defined(__BSD__)
 #  include <sys/event.h>
 #  include <sys/socket.h>
 #  include <netinet/in.h>
 #  include <sys/socket.h>
+#  include <cstdio>
+#  include <cerrno>
+#  include <cstring>
 	typedef int socket_type;
 #  define socketClose(s) ::close((s))
 #  define SOCKET_ERROR -1
@@ -40,6 +46,9 @@
 #  include <sys/socket.h>
 #  include <netinet/in.h>
 #  include <sys/socket.h>
+#  include <cstdio>
+#  include <cerrno>
+#  include <cstring>
 	typedef int socket_type;
 #  define socketClose(s) ::close((s))
 #  define SOCKET_ERROR -1

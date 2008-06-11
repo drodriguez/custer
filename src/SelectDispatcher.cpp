@@ -2,6 +2,8 @@
 #include "EventHandler.h"
 #include "utils.h"
 
+#include <queue>
+
 using namespace custer;
 
 SelectDispatcher::SelectDispatcher() :
@@ -39,22 +41,23 @@ void SelectDispatcher::registerHandler
 	
 	// Iteramos por todos los eventos añadiendo el socket a las listas
 	// adecuadas.
-	while (et != NO_EVENT) {
-		if (et & ACCEPT_EVENT) {
+	unsigned int tempEt = et;
+	while (tempEt != NO_EVENT) {
+		if (tempEt & ACCEPT_EVENT) {
 			FD_SET(sckt, &m_readSockets);
-			et &= ~ACCEPT_EVENT;
-		} else if (et & READ_EVENT) {
+			tempEt &= ~ACCEPT_EVENT;
+		} else if (tempEt & READ_EVENT) {
 			FD_SET(sckt, &m_readSockets);
-			et &= ~READ_EVENT;
-		} else if (et & WRITE_EVENT) {
+			tempEt &= ~READ_EVENT;
+		} else if (tempEt & WRITE_EVENT) {
 			FD_SET(sckt, &m_writeSockets);
-			et &= ~WRITE_EVENT;
-		} else if (et & CLOSE_EVENT) {
+			tempEt &= ~WRITE_EVENT;
+		} else if (tempEt & CLOSE_EVENT) {
 			FD_SET(sckt, &m_readSockets);
-			et &= ~CLOSE_EVENT;
+			tempEt &= ~CLOSE_EVENT;
 		} else {
 			error("Evento desconocido");
-			et = NO_EVENT;
+			tempEt = NO_EVENT;
 		}
 	}
 		
@@ -78,29 +81,23 @@ void SelectDispatcher::removeHandler
 		error("Intento de eliminar un EventHandler no existente");
 		return;
 	}
-	
-	// Si nos piden todos suponenmos que van a cerrar el socket ellos
-	if (et == ALL_EVENTS) {
-		m_eventHandlerMap.erase(eh.get());
-		return;
-	}
-		
+			
 	EventHandlerPair ehp = m_eventHandlerMap[eh.get()];
 	
 	// Eliminamos el socket de las listas que se indiquen.
 	socket_type sckt = eh->getHandle();
 	unsigned int tempEt = et;
-	while (tempEt !=) {
+	while (tempEt != NO_EVENT) {
 		if (tempEt & ACCEPT_EVENT) {
 			FD_CLR(sckt, &m_readSockets);
 			tempEt &= ~ACCEPT_EVENT;
 		} else if (tempEt & READ_EVENT) {
 			FD_CLR(sckt, &m_readSockets);
 			tempEt &= ~READ_EVENT;
-		} else if (et & WRITE_EVENT) {
+		} else if (tempEt & WRITE_EVENT) {
 			FD_CLR(sckt, &m_writeSockets);
 			tempEt &= ~WRITE_EVENT;
-		} else if (et & CLOSE_EVENT) {
+		} else if (tempEt & CLOSE_EVENT) {
 			FD_CLR(sckt, &m_readSockets);
 			tempEt &= ~CLOSE_EVENT;
 		} else {
@@ -148,12 +145,12 @@ void SelectDispatcher::handleEvents(long timeout)
 	 */
 	int readySockets = select(
 #ifndef WIN32
-		*m_sockets.rbegin(),
+		*m_sockets.rbegin()+1,
 #else
 		0, // Windows ignora este parámetro
 #endif
-		m_readSocketsCopy,
-		m_writeSocketsCopy,
+		&m_readSocketsCopy,
+		&m_writeSocketsCopy,
 		NULL,
 		timeout == -1 ? NULL : &selectTimeout);
 	
@@ -165,34 +162,68 @@ void SelectDispatcher::handleEvents(long timeout)
 	
 	boost::shared_ptr<IDispatcher> self(shared_from_this());
 
-	// Tenemos que copiar los sockets que vigilamos.
+	// Tenemos que copiar los EventHandler.
 	/*
-	 * En no-Win32 sería más facil empezar en socket = 0 y terminar en el
+	 * En NO-Win32 sería más facil empezar en socket = 0 y terminar en el
 	 * máximo socket que le hemos pasado a select().
 	 */
-	std::queue<socket_type> socketQueue;
+	std::queue<EventHandlerPair> handlerQueue;
 	EventHandlerMap::iterator iter;
 	for (iter = m_eventHandlerMap.begin();
 		iter != m_eventHandlerMap.end();
 		++iter) {
-		socketQueue.push(iter->second->getHandle());
+		handlerQueue.push(iter->second);
 	}
 	
-	while (readySockets > 0 && !socketQueue.empty()) {
-		socket_type actualSocket = socketQueue.front();
+	while (readySockets > 0 && !handlerQueue.empty()) {
+		EventHandlerPair actualHandler = handlerQueue.front();
+		socket_type sckt = actualHandler.first->getHandle();
 		
-		if (FD_ISSET(actualSocket, &m_readSocketsCopy)) {
-			debug("El socket está en la lista de lectura");
-			
-			readySockets--;
+		struct sockaddr remoteAddress;
+		socklen_t remoteAddressSize = sizeof(struct sockaddr);
+		memset(&remoteAddress, 0, remoteAddressSize);
+		bool socketConnected =
+			getpeername(sckt, &remoteAddress, &remoteAddressSize) != SOCKET_ERROR;
+		
+		// Comprobamos si se ha cerrado el socket
+		//*
+		if (socketConnected && FD_ISSET(sckt, &m_readSocketsCopy)) {
+			char test;
+			int result = recv(sckt, &test, sizeof(test), MSG_PEEK);
+			if (result == SOCKET_ERROR) {
+				debug("Parece que el socket ha desaparecido: %s", strerror(errno));
+				actualHandler.first->handleClose(self);
+				// Repetido xq avanzamos sin mirar más este socket.
+				readySockets--;
+				handlerQueue.pop();
+				continue;
+			}
 		}
+		/**/
 		
-		if (FD_ISSET(actualSocket, &m_writeSocketsCopy)) {
+		if (FD_ISSET(sckt, &m_writeSocketsCopy) &&
+			actualHandler.second & WRITE_EVENT) {
 			debug("El socket está en la lista de escritura");
 			
+			actualHandler.first->handleWrite(self);
+			
 			readySockets--;
 		}
 		
-		socketQueue.pop();
+		if (FD_ISSET(sckt, &m_readSocketsCopy)) {
+			debug("El socket está en la lista de lectura");
+						
+			// Comprobamos si el socket está escuchando
+			if (!socketConnected &&
+				actualHandler.second & ACCEPT_EVENT) {
+				actualHandler.first->handleAccept(self);
+			} else if (actualHandler.second & READ_EVENT) {
+				actualHandler.first->handleRead(self);
+			}
+			
+			readySockets--;
+		}
+				
+		handlerQueue.pop();
 	}
 }

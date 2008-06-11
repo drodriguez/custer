@@ -63,7 +63,8 @@ if env['PLATFORM'] == 'win32':
 		ws2_32
 	""")
 elif env['PLATFORM'] == 'darwin':
-	sources.append("KQueueDispatcher.cpp")
+	# sources.append("KQueueDispatcher.cpp")
+	sources.append("SelectDispatcher.cpp")
 	libs = Split("""
 		boost_program_options
 		boost_filesystem

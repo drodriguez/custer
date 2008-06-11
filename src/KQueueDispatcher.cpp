@@ -5,8 +5,6 @@
 #include <sys/event.h>
 #include <sys/socket.h>
 #include <sys/time.h>
-#include <cstdio>
-#include <cerrno>
 
 using namespace custer;
 

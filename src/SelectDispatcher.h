@@ -7,6 +7,11 @@
 #include <boost/shared_ptr.hpp>
 
 #include <map>
+
+#ifndef WIN32
+#  include <set>
+#endif
+
 #include <sys/select.h>
 
 NS_CUSTER_BEGIN

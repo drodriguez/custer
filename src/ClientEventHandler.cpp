@@ -5,9 +5,6 @@
 #include "HttpResponse.h"
 #include "DirectorySender.h"
 
-#include <cstring>
-#include <cerrno>
-
 using namespace custer;
 
 // TODO: VALIDATE_LENGTH en todos estas funciones

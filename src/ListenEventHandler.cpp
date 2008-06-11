@@ -2,9 +2,6 @@
 #include "ClientEventHandler.h"
 #include "CusterServer.h"
 
-#include <cstring>
-#include <cerrno>
-
 #define BACKLOG 32
 
 using namespace custer;
