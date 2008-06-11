@@ -44,7 +44,7 @@ HttpRequest::Method HttpRequest::getRequestMethod()
 	else if (rm == "PUT")    return PUT;
 	else if (rm == "DELETE") return DELETE;
 	else if (rm == "HEAD")   return HEAD;
-	else                     return GET; // FIX: Mejor peor elección
+	else                     return GET; // FIXME: Mejor peor elección
 }
 
 std::string HttpRequest::getRequestURI()

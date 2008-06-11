@@ -130,7 +130,7 @@ private:
 	socket_type m_connection;
 	
 	/** Cuerpo de la petición */
-	// FIX: ¿Qué pasa si esto es realmente enorme?
+	// FIXME: ¿Qué pasa si esto es realmente enorme?
 	std::stringstream m_body;
 	
 	/** Longitud del cuerpo */

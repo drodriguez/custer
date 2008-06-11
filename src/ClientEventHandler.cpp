@@ -129,7 +129,7 @@ void ClientEventHandler::handleRead(boost::shared_ptr<IDispatcher> dispatcher)
 	char buffer[CHUNK_SIZE];
 	int n;
 		
-	if ((n = socketRead(m_handle, buffer, CHUNK_SIZE)) == SOCKET_ERROR) {
+	if ((n = recv(m_handle, buffer, CHUNK_SIZE, 0)) == SOCKET_ERROR) {
 		error("Error leyendo de socket: %s", strerror(errno));
 		closeConnection(dispatcher);
 	} else if (n == 0) {
