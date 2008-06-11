@@ -3,6 +3,14 @@
 
 #include "custer.h"
 
+#define DEF_MAX_LENGTH(N, length) \
+	const size_t MAX_##N##_LENGTH = length; \
+	const char* MAX_##N##_LENGTH_ERR = "El elemento HTTP " # N " es más grande que la longitud permitida " # length ".";
+#define VALIDATE_MAX_LENGTH(len, N) \
+	if (len > MAX_##N##_LENGTH) { \
+		error(MAX_##N##_LENGTH_ERR); \
+	}
+
 NS_CUSTER_BEGIN
 
 /**

@@ -12,27 +12,27 @@ extern unsigned int logLevel;
 /**
  * Imprime un mensaje de error fatal y sale de la aplicación.
  */
-void fatal(char* fmt, ...);
+void fatal(const char* fmt, ...);
 
 /**
  * Imprime un mensaje de error "recuperable".
  */
-void error(char* fmt, ...);
+void error(const char* fmt, ...);
 
 /**
  * Imprime una advertencia.
  */
-void warn(char* fmt, ...);
+void warn(const char* fmt, ...);
 
 /**
  * Imprime un mensaje de información.
  */
-void info(char* fmt, ...);
+void info(const char* fmt, ...);
 
 /**
  * Imprime un mensaje de depuración.
  */
-void debug(char* fmt, ...);
+void debug(const char* fmt, ...);
 
 /**
  * Intenta crear una zona de memoria en el heap del tamaño especificado,

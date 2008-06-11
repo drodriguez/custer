@@ -2,8 +2,13 @@
 #include "const.h"
 #include "HttpRequest.h"
 
-// TODO: VALIDATE_LENGTH en todos estas funciones
-
+DEF_MAX_LENGTH(FIELD_NAME, 256);
+DEF_MAX_LENGTH(FIELD_VALUE, 80 * 1024);
+DEF_MAX_LENGTH(REQUEST_URI, 1024 * 12);
+DEF_MAX_LENGTH(FRAGMENT, 1024);
+DEF_MAX_LENGTH(REQUEST_PATH, 1024);
+DEF_MAX_LENGTH(QUERY_STRING, 1024 * 10);
+	
 void custer::request_method_cb(void* data, const char* at, size_t length)
 {
 	debug("Request method: %.*s", length, at);
@@ -19,6 +24,9 @@ void custer::http_field_cb(
 	const char* value,
 	size_t vlen)
 {
+	VALIDATE_MAX_LENGTH(flen, FIELD_NAME);
+	VALIDATE_MAX_LENGTH(vlen, FIELD_VALUE);
+	
 	debug("HTTP field: %.*s: %.*s",
 		flen,
 		field,
@@ -34,6 +42,8 @@ void custer::http_field_cb(
 
 void custer::request_uri_cb(void* data, const char* at, size_t length)
 {
+	VALIDATE_MAX_LENGTH(length, REQUEST_URI);
+	
 	debug("Request URI: %.*s", length, at);
 	ParamsMap* map =
 		static_cast<ParamsMap*>(data);
@@ -42,6 +52,8 @@ void custer::request_uri_cb(void* data, const char* at, size_t length)
 
 void custer::fragment_cb(void* data, const char* at, size_t length)
 {
+	VALIDATE_MAX_LENGTH(length, FRAGMENT);
+	
 	debug("Fragment: %.*s", length, at);
 	ParamsMap* map =
 		static_cast<ParamsMap*>(data);
@@ -50,6 +62,8 @@ void custer::fragment_cb(void* data, const char* at, size_t length)
 
 void custer::request_path_cb(void* data, const char* at, size_t length)
 {
+	VALIDATE_MAX_LENGTH(length, REQUEST_PATH);
+	
 	debug("Request path: %.*s", length, at);
 	ParamsMap* map =
 		static_cast<ParamsMap*>(data);
@@ -58,6 +72,8 @@ void custer::request_path_cb(void* data, const char* at, size_t length)
 
 void custer::query_string_cb(void* data, const char* at, size_t length)
 {
+	VALIDATE_MAX_LENGTH(length, QUERY_STRING);
+	
 	debug("Query string: %.*s", length, at);
 	ParamsMap* map =
 		static_cast<ParamsMap*>(data);

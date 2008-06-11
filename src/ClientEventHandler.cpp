@@ -14,6 +14,9 @@
 
 using namespace custer;
 
+DEF_MAX_LENGTH(HEADER, 1024 * (80 + 32));
+DEF_MAX_LENGTH(BODY, 1024 * (80 + 32));
+
 ClientEventHandler::ClientEventHandler(
 	boost::shared_ptr<CusterServer> server,
 	socket_type connection) :
@@ -24,7 +27,7 @@ ClientEventHandler::ClientEventHandler(
 	debug("ClientEventHandler::constructor");
 	m_handle = connection;
 	m_directorySender = m_server->getDirectorySender();
-	m_data = (char *) xmalloc(HTTP_MAX_HEADER * sizeof(char));
+	m_data = (char *) xmalloc(MAX_HEADER_LENGTH * sizeof(char));
 	m_parser = (http_parser*) xmalloc(sizeof(http_parser));
 	m_params = boost::shared_ptr<ParamsMap>(new ParamsMap());
 	
@@ -68,7 +71,7 @@ void ClientEventHandler::handleRead(boost::shared_ptr<IDispatcher> dispatcher)
 	if (http_parser_is_finished(m_parser)) {
 		m_request->handleRead(buffer, n);
 	} else {
-		if (m_dataLength + n >= HTTP_MAX_HEADER) {
+		if (m_dataLength + n >= MAX_HEADER_LENGTH) {
 			error("Longitud de HEADER excesiva. Cliente expulsado");
 			closeConnection(dispatcher);
 		}

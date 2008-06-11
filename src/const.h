@@ -14,9 +14,6 @@
 
 #define CHUNK_SIZE (16 * 1024)
 
-#define HTTP_MAX_HEADER (1024 * (80 + 32))
-#define HTTP_MAX_BODY HTTP_MAX_HEADER
-
 #define HTTP_CONTENT_TYPE "Content-Type"
 #define HTTP_LAST_MODIFIED "Last-Modified"
 #define HTTP_USER_AGENT "User-Agent"
