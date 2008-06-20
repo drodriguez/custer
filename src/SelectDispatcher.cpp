@@ -213,7 +213,7 @@ void SelectDispatcher::handleEvents(long timeout)
 		}
 		
 		if (FD_ISSET(sckt, &m_readSocketsCopy)) {
-			debug("El socket está en la lista de lectura");
+			debug("El socket esta en la lista de lectura");
 						
 			// Comprobamos si el socket está escuchando
 			if (!socketConnected &&
