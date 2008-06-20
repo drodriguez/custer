@@ -12,7 +12,9 @@
 #  include <set>
 #endif
 
-#include <sys/select.h>
+#ifndef WIN32
+#  include <sys/select.h>
+#endif
 
 NS_CUSTER_BEGIN
 

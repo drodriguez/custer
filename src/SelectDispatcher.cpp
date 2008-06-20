@@ -205,7 +205,7 @@ void SelectDispatcher::handleEvents(long timeout)
 		
 		if (FD_ISSET(sckt, &m_writeSocketsCopy) &&
 			actualHandler.second & WRITE_EVENT) {
-			debug("El socket está en la lista de escritura");
+			debug("El socket esta en la lista de escritura");
 			
 			actualHandler.first->handleWrite(self);
 			

@@ -56,7 +56,7 @@ void ListenEventHandler::handleAccept
 	if ((connection = accept(m_handle, address, &address_len)) == -1)
 		fatal("en accept(): %s", strerror(ERROR_NUM));
 		
-	debug("Conexión aceptada");
+	debug("Conexion aceptada");
 	
 	boost::shared_ptr<ClientEventHandler> handler(
 			new ClientEventHandler(m_server, connection));
