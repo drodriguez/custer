@@ -13,6 +13,7 @@
 #  define socketClose(s) ::close((s))
 #  define SOCKET_ERROR -1
 #  define socketSetOpt(s,l,n,v,sz) ::setsockopt((s),(l),(n),(v),(sz))
+#  define ERROR_NUM errno
 #  include "SelectDispatcher.h"
 
 #elif defined(__BSD__)
@@ -27,6 +28,7 @@
 #  define socketClose(s) ::close((s))
 #  define SOCKET_ERROR -1
 #  define socketSetOpt(s,l,n,v,sz) ::setsockopt((s),(l),(n),(v),(sz))
+#  define ERROR_NUM errno
 #  include "KQueueDispatcher.h"
 
 #elif defined(WIN32)
@@ -39,6 +41,7 @@
 	typedef SOCKET socket_type;
 #  define socketClose(s) ::closesocket((s))
 #  define socketSetOpt(s,l,n,v,sz) ::setsockopt((s),(l),(n),(char*)(v),(sz))
+#  define ERROR_NUM WSAGetLastError()
 #  include "SelectDispatcher.h"
 
 #elif defined(__linux__)
@@ -53,6 +56,7 @@
 #  define socketClose(s) ::close((s))
 #  define SOCKET_ERROR -1
 #  define socketSetOpt(s,l,n,v,sz) ::setsockopt((s),(l),(n),(v),(sz))
+#  define ERROR_NUM errno
 #  include "EpollDispatcher.h"
 #else
 #  error "No hay dispatcher asociado a esta plataforma"

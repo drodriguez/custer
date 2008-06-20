@@ -14,7 +14,7 @@ KQueueDispatcher::KQueueDispatcher() :
 	m_keventUsed(0)
 {
 	if ((m_kqueue = kqueue()) == -1)
-		fatal("Error creando kqueue: %s", strerror(errno));
+		fatal("Error creando kqueue: %s", strerror(ERROR_NUM));
 	
 	// Creamos los vectores de kevents.
 	m_keventChanges =
@@ -193,7 +193,7 @@ void KQueueDispatcher::handleEvents(long timeout)
 	// debugKevents(m_keventList, numEvents);
 		
 	if (numEvents == -1)
-		fatal("Error en kevent(): %s", strerror(errno));
+		fatal("Error en kevent(): %s", strerror(ERROR_NUM));
 	if (numEvents == 0) {
 		debug("No se han recibido eventos, timeout: %d", timeout);
 		/* TODO: No definimos el evento de timeout

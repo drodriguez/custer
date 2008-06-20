@@ -17,7 +17,7 @@ ListenEventHandler::ListenEventHandler(
 	listenAddress.s_addr = htonl(INADDR_ANY);
 	
 	if ((m_handle = socket(PF_INET, SOCK_STREAM, 0)) == -1)
-		fatal("creando socket: %s", strerror(errno));
+		fatal("creando socket: %s", strerror(ERROR_NUM));
 	
 	if (socketSetOpt(
 		m_handle,
@@ -25,7 +25,7 @@ ListenEventHandler::ListenEventHandler(
 		SO_REUSEADDR,
 		&one,
 		sizeof(one)) == -1)
-		fatal("establenciendo SO_REUSEADDR: %s", strerror(errno));
+		fatal("establenciendo SO_REUSEADDR: %s", strerror(ERROR_NUM));
 
 	memset(&inetListenAddress, 0, sizeof(inetListenAddress));
 	inetListenAddress.sin_family = AF_INET;
@@ -36,10 +36,10 @@ ListenEventHandler::ListenEventHandler(
 		m_handle,
 		(struct sockaddr*) &inetListenAddress,
 		sizeof(inetListenAddress)) == -1)
-		fatal("asociando socket: %s", strerror(errno));
+		fatal("asociando socket: %s", strerror(ERROR_NUM));
 	
 	if (listen(m_handle, BACKLOG) == -1)
-		fatal("escuchando en el socket: %s", strerror(errno));
+		fatal("escuchando en el socket: %s", strerror(ERROR_NUM));
 	
 	info("Escuchando conexiones al puerto %d", server->getPort());
 }
@@ -54,7 +54,7 @@ void ListenEventHandler::handleAccept
 	
 	// Esto no debería bloquear...
 	if ((connection = accept(m_handle, address, &address_len)) == -1)
-		fatal("en accept(): %s", strerror(errno));
+		fatal("en accept(): %s", strerror(ERROR_NUM));
 		
 	debug("Conexión aceptada");
 	

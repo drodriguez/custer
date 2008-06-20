@@ -64,7 +64,8 @@ void SelectDispatcher::registerHandler
 	EventHandlerMap::iterator iter;
 	if ((iter = m_eventHandlerMap.find(eh.get())) != m_eventHandlerMap.end()) {
 		int newEt = iter->second.second | et;
-		debug("actualizando antiguo: %x, %x, %x", iter->second.second, et, newEt);
+		debug("actualizando antiguo: %x, %x, %x",
+			iter->second.second, et, newEt);
 		m_eventHandlerMap[eh.get()] = std::make_pair(eh, newEt);
 	} else {
 		m_eventHandlerMap[eh.get()] = std::make_pair(eh, et);
@@ -155,7 +156,7 @@ void SelectDispatcher::handleEvents(long timeout)
 		timeout == -1 ? NULL : &selectTimeout);
 	
 	if (readySockets == SOCKET_ERROR)
-		fatal("Error en select(): %s", strerror(errno));
+		fatal("Error en select(): %s", strerror(ERROR_NUM));
 	if (readySockets == 0) {
 		debug("No se han recibido eventos, timeout: %d", timeout);
 	}
@@ -182,8 +183,8 @@ void SelectDispatcher::handleEvents(long timeout)
 		struct sockaddr remoteAddress;
 		socklen_t remoteAddressSize = sizeof(struct sockaddr);
 		memset(&remoteAddress, 0, remoteAddressSize);
-		bool socketConnected =
-			getpeername(sckt, &remoteAddress, &remoteAddressSize) != SOCKET_ERROR;
+		bool socketConnected = getpeername(
+			sckt, &remoteAddress, &remoteAddressSize) != SOCKET_ERROR;
 		
 		// Comprobamos si se ha cerrado el socket
 		//*
@@ -191,7 +192,8 @@ void SelectDispatcher::handleEvents(long timeout)
 			char test;
 			int result = recv(sckt, &test, sizeof(test), MSG_PEEK);
 			if (result == SOCKET_ERROR) {
-				debug("Parece que el socket ha desaparecido: %s", strerror(errno));
+				debug("Parece que el socket ha desaparecido: %s",
+					strerror(ERROR_NUM));
 				actualHandler.first->handleClose(self);
 				// Repetido xq avanzamos sin mirar más este socket.
 				readySockets--;
