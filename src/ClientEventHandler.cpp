@@ -97,6 +97,7 @@ ClientEventHandler::ClientEventHandler(
 	m_handle = connection;
 	m_directorySender = m_server->getDirectorySender();
 	m_data = (char *) xmalloc(HTTP_MAX_HEADER * sizeof(char));
+	memset(m_data, 0, HTTP_MAX_HEADER * sizeof(char));
 	m_parser = (http_parser*) xmalloc(sizeof(http_parser));
 	m_params = boost::shared_ptr<ParamsMap>(new ParamsMap());
 	
