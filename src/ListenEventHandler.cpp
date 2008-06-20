@@ -19,13 +19,15 @@ ListenEventHandler::ListenEventHandler(
 	if ((m_handle = socket(PF_INET, SOCK_STREAM, 0)) == -1)
 		fatal("creando socket: %s", strerror(ERROR_NUM));
 	
+	/*
 	if (socketSetOpt(
 		m_handle,
 		SOL_SOCKET,
 		SO_REUSEADDR,
 		&one,
-		sizeof(one)) == -1)
+		sizeof(one)) == SOCKET_ERROR)
 		fatal("establenciendo SO_REUSEADDR: %s", strerror(ERROR_NUM));
+	/**/
 
 	memset(&inetListenAddress, 0, sizeof(inetListenAddress));
 	inetListenAddress.sin_family = AF_INET;
@@ -35,10 +37,10 @@ ListenEventHandler::ListenEventHandler(
 	if (bind(
 		m_handle,
 		(struct sockaddr*) &inetListenAddress,
-		sizeof(inetListenAddress)) == -1)
+		sizeof(inetListenAddress)) == SOCKET_ERROR)
 		fatal("asociando socket: %s", strerror(ERROR_NUM));
 	
-	if (listen(m_handle, BACKLOG) == -1)
+	if (listen(m_handle, BACKLOG) == SOCKET_ERROR)
 		fatal("escuchando en el socket: %s", strerror(ERROR_NUM));
 	
 	info("Escuchando conexiones al puerto %d", server->getPort());
