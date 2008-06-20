@@ -42,6 +42,9 @@
 #  define socketClose(s) ::closesocket((s))
 #  define socketSetOpt(s,l,n,v,sz) ::setsockopt((s),(l),(n),(char*)(v),(sz))
 #  define ERROR_NUM WSAGetLastError()
+#  ifndef FD_COPY
+#    define FD_COPY(f, t) memcpy((t), (f), sizeof(*(f)))
+#  endif
 #  include "SelectDispatcher.h"
 
 #elif defined(__linux__)
