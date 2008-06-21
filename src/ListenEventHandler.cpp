@@ -51,7 +51,7 @@ void ListenEventHandler::handleAccept
 {
 	debug("ListenEventHandler::handleAccept");
 	socket_type connection;
-	struct sockaddr* address;
+	struct sockaddr* address = NULL;
 	socklen_t address_len = sizeof(struct sockaddr_in);
 	
 	// Esto no debería bloquear...
