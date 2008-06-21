@@ -28,7 +28,10 @@ enum EventType {
  */
 class IDispatcher : public boost::enable_shared_from_this<IDispatcher>
 {
-public:	
+public:
+	/** Destructor */
+	virtual ~IDispatcher() {}
+	
 	/**
 	 * Registra un EventHandler de un EventType específico.
 	 *

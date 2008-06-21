@@ -66,11 +66,12 @@ DirectorySender::DirectorySender(
 	std::string directory,
 	bool allowListing,
 	std::string indexFile) :
-	m_directory(directory),
 	m_allowListing(allowListing),
+	m_directory(directory),
 	m_indexFile(indexFile)
 {
 	m_directory = bfs::system_complete(m_directory);
+	m_directory.normalize();
 }
 
 boost::filesystem::path DirectorySender::canServe(std::string pathInfo)
@@ -79,8 +80,11 @@ boost::filesystem::path DirectorySender::canServe(std::string pathInfo)
 	// Lo completamos con el directorio base
 	bfs::path requestPath = m_directory / requestPathStr;
 	requestPath = bfs::system_complete(requestPath);
+	requestPath.normalize();
 	
 	// Comprobamos que esté dentro del directorio base
+	debug("requestPath: %s", requestPath.string().c_str());
+	debug("m_directory: %s", m_directory.string().c_str());
 	if (ba::starts_with(requestPath.string(), m_directory.string()) &&
 		bfs::exists(requestPath)) {
 		// Existe y está en una localización permitida

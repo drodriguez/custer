@@ -19,7 +19,7 @@ int main(int argc, char* argv[])
 		("directory,d", bpo::value<std::string>()->default_value(".", " dir. actual"),
 			"directorio que se servira")
 		("verbose,v", "imprime más informacion durante la ejecucion")
-		("debug,d", "imprime informacion de depuracion");
+		("debug,D", "imprime informacion de depuracion");
 	
 	bpo::variables_map cmdline_variables;
 	try {
