@@ -31,25 +31,6 @@ sources = Split("""
 	http/parser.c
 """)
 
-includes = Split("""
-	custer.h
-	const.h
-	platform.h
-	utils.h
-	parser_callbacks.h
-	ClientEventHandler.h
-	CusterServer.h
-	DirectorySender.h
-	Dispatcher.h
-	EventHandler.h
-	HttpRequest.h
-	HttpResponse.h
-	IDispatcher.h
-	KQueueDispatcher.h
-	ListenEventHandler.h
-	http/parser.h
-""")
-
 libs = Split("""
 	boost_program_options
 	boost_filesystem
@@ -57,10 +38,3 @@ libs = Split("""
 
 objects = env.Object(sources)
 program = env.Program('custer', objects, LIBS=libs)
-
-# env.MSVSProject(
-#	target = 'custer' + env['MSVSPROJECTSUFFIX'],
-#	srcs = sources,
-#	incs = includes,
-#	buildtarget = program,
-#	varian = 'Release')
