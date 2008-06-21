@@ -19,7 +19,7 @@ ListenEventHandler::ListenEventHandler(
 	if ((m_handle = socket(PF_INET, SOCK_STREAM, 0)) == -1)
 		fatal("creando socket: %s", strerror(ERROR_NUM));
 	
-	/*
+#ifndef WIN32
 	if (socketSetOpt(
 		m_handle,
 		SOL_SOCKET,
@@ -27,7 +27,7 @@ ListenEventHandler::ListenEventHandler(
 		&one,
 		sizeof(one)) == SOCKET_ERROR)
 		fatal("establenciendo SO_REUSEADDR: %s", strerror(ERROR_NUM));
-	/**/
+#endif
 
 	memset(&inetListenAddress, 0, sizeof(inetListenAddress));
 	inetListenAddress.sin_family = AF_INET;
