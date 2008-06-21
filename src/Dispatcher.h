@@ -18,6 +18,9 @@ public:
 	/** Constructor */
 	Dispatcher();
 	
+	/** Destructor */
+	~Dispatcher() {}
+	
 	// Heredada de IDispatcher
 	void registerHandler(boost::shared_ptr<EventHandler> eh, unsigned int et);
 	

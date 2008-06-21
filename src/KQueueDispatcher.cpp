@@ -221,7 +221,7 @@ void KQueueDispatcher::handleEvents(long timeout)
 				iter->second->first->handleTimeout();
 			}
 		}
-		/**/
+		*/
 	}
 	
 	boost::shared_ptr<IDispatcher> self(shared_from_this());

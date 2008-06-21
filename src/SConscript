@@ -6,7 +6,7 @@ if env['PLATFORM'] == 'darwin': # Mac OS X, incluimos rutas de MacPorts
 	env.Append(CPPPATH = "/opt/local/include")
 	env.Append(LIBPATH = "/opt/local/lib")
 
-env.Append(CCFLAGS = '-g')
+env.Append(CCFLAGS = '-g -Wall')
 
 if env.WhereIs('ragel'):
 	print "Ragel encontrado"

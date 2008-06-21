@@ -66,8 +66,8 @@ DirectorySender::DirectorySender(
 	std::string directory,
 	bool allowListing,
 	std::string indexFile) :
-	m_directory(directory),
 	m_allowListing(allowListing),
+	m_directory(directory),
 	m_indexFile(indexFile)
 {
 	m_directory = bfs::system_complete(m_directory);
