@@ -4,7 +4,7 @@ if env['PLATFORM'] == 'darwin': # Mac OS X, incluimos rutas de MacPorts
 	env.PrependENVPath('PATH', "/opt/local/bin")
 	env.Append(CPPPATH = "/opt/local/include")
 	env.Append(LIBPATH = "/opt/local/lib")
-	env.Append(CCFLAGS = '-g')
+	env.Append(CCFLAGS = '-g -Wall')
 elif env['PLATFORM'] == 'win32':
 	env.Append(CPPPATH = "c:\\programacion\\boost\\boost_1_35_0")
 	env.Append(LIBPATH = "c:\\programacion\\boost\\boost_1_35_0\\lib")
@@ -12,7 +12,7 @@ elif env['PLATFORM'] == 'win32':
 	env.Append(CPPDEFINES = ['WIN32','BOOST_ALL_NO_LIB', 'BOOST_ALL_DYN_LINK'])
 	env.Append(LINKFLAGS = '/DEBUG /SUBSYSTEM:CONSOLE')
 else:
-	env.Append(CCFLAGS = '-g')
+	env.Append(CCFLAGS = '-g -Wall')
 
 if env.WhereIs('ragel'):
 	print "Ragel encontrado"
@@ -26,6 +26,7 @@ sources = Split("""
 	main.cpp
 	CusterServer.cpp
 	ListenEventHandler.cpp
+	parser_callbacks.cpp
 	ClientEventHandler.cpp
 	utils.cpp
 	Dispatcher.cpp
@@ -35,26 +36,8 @@ sources = Split("""
 	http/parser.c
 """)
 
-includes = Split("""
-	custer.h
-	const.h
-	platform.h
-	utils.h
-	ClientEventHandler.h
-	CusterServer.h
-	DirectorySender.h
-	Dispatcher.h
-	EventHandler.h
-	HttpRequest.h
-	HttpResponse.h
-	IDispatcher.h
-	ListenEventHandler.h
-	http/parser.h
-""")
-
 if env['PLATFORM'] == 'win32':
 	sources.append("SelectDispatcher.cpp")
-	includes.append("SelectDispatcher.h")
 	libs = Split("""
 		boost_system-vc80-mt-gd-1_35
 		boost_program_options-vc80-mt-gd-1_35
@@ -63,8 +46,7 @@ if env['PLATFORM'] == 'win32':
 		ws2_32
 	""")
 elif env['PLATFORM'] == 'darwin':
-	# sources.append("KQueueDispatcher.cpp")
-	sources.append("SelectDispatcher.cpp")
+	sources.append("KQueueDispatcher.cpp")
 	libs = Split("""
 		boost_program_options
 		boost_filesystem
@@ -73,10 +55,3 @@ elif env['PLATFORM'] == 'darwin':
 
 objects = env.Object(sources)
 program = env.Program('custer', objects, LIBS=libs)
-
-#env.MSVSProject(
-#	target = 'custer' + env['MSVSPROJECTSUFFIX'],
-#	srcs = sources,
-#	incs = includes,
-#	buildtarget = program,
-#	variant = 'Debug')

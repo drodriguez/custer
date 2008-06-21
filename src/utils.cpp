@@ -6,7 +6,7 @@
 
 using namespace std;
 
-static void vlog(char* fmt, va_list ap)
+static void vlog(const char* fmt, va_list ap)
 {
 	vfprintf(stderr, fmt, ap);
 	fputc('\n', stderr);
@@ -28,28 +28,28 @@ unsigned int logLevel = LOG_WARN;
 	vlog(fmt, ap); \
 	va_end(ap);
 
-void fatal(char* fmt, ...)
+void fatal(const char* fmt, ...)
 {
 	LOG_WITH_LEVEL(LOG_FATAL)
 	exit(-1);
 }
 
-void error(char* fmt, ...)
+void error(const char* fmt, ...)
 {
 	LOG_WITH_LEVEL(LOG_ERROR)
 }
 
-void warn(char* fmt, ...)
+void warn(const char* fmt, ...)
 {
 	LOG_WITH_LEVEL(LOG_WARN)
 }
 
-void info(char* fmt, ...)
+void info(const char* fmt, ...)
 {
 	LOG_WITH_LEVEL(LOG_INFO)
 }
 
-void debug(char* fmt, ...)
+void debug(const char* fmt, ...)
 {
 	LOG_WITH_LEVEL(LOG_DEBUG)
 }

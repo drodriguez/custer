@@ -4,87 +4,12 @@
 #include "HttpRequest.h"
 #include "HttpResponse.h"
 #include "DirectorySender.h"
+#include "parser_callbacks.h"
 
 using namespace custer;
 
-// TODO: VALIDATE_LENGTH en todos estas funciones
-void request_method_cb(void* data, const char* at, size_t length)
-{
-	debug("Request method: %.*s", length, at);
-	ParamsMap* map =
-		static_cast<ParamsMap*>(data);
-	map->insert(std::make_pair(HTTP_REQUEST_METHOD, std::string(at, length)));
-}
-
-void http_field_cb(
-	void* data,
-	const char* field,
-	size_t flen,
-	const char* value,
-	size_t vlen)
-{
-	debug("HTTP field: %.*s: %.*s",
-		flen,
-		field,
-		(vlen > 40 ? 40 : vlen),
-		value);
-	ParamsMap* map =
-		static_cast<ParamsMap*>(data);
-	map->insert(std::make_pair(
-		std::string(field, flen),
-		std::string(value, vlen)
-	));
-}
-
-void request_uri_cb(void* data, const char* at, size_t length)
-{
-	debug("Request URI: %.*s", length, at);
-	ParamsMap* map =
-		static_cast<ParamsMap*>(data);
-	map->insert(std::make_pair(HTTP_REQUEST_URI, std::string(at, length)));
-}
-
-void fragment_cb(void* data, const char* at, size_t length)
-{
-	debug("Fragment: %.*s", length, at);
-	ParamsMap* map =
-		static_cast<ParamsMap*>(data);
-	map->insert(std::make_pair(HTTP_FRAGMENT, std::string(at, length)));
-}
-
-void request_path_cb(void* data, const char* at, size_t length)
-{
-	debug("Request path: %.*s", length, at);
-	ParamsMap* map =
-		static_cast<ParamsMap*>(data);
-	map->insert(std::make_pair(HTTP_REQUEST_PATH, std::string(at, length)));
-}
-
-void query_string_cb(void* data, const char* at, size_t length)
-{
-	debug("Query string: %.*s", length, at);
-	ParamsMap* map =
-		static_cast<ParamsMap*>(data);
-	map->insert(std::make_pair(HTTP_QUERY_STRING, std::string(at, length)));
-}
-
-void http_version_cb(void* data, const char* at, size_t length)
-{
-	debug("HTTP version: %.*s", length, at);
-	ParamsMap* map =
-		static_cast<ParamsMap*>(data);
-	map->insert(std::make_pair(HTTP_VERSION, std::string(at, length)));
-}
-
-void header_done_cb(void* data, const char* at, size_t length)
-{
-	if (length <= 0) return;
-	
-	debug("Body: %.*s", length, at);
-	ParamsMap* map =
-		static_cast<ParamsMap*>(data);
-	map->insert(std::make_pair(HTTP_BODY, std::string(at, length)));
-}
+DEF_MAX_LENGTH(HEADER, 1024 * (80 + 32));
+DEF_MAX_LENGTH(BODY, 1024 * (80 + 32));
 
 ClientEventHandler::ClientEventHandler(
 	boost::shared_ptr<CusterServer> server,
@@ -96,8 +21,8 @@ ClientEventHandler::ClientEventHandler(
 	debug("ClientEventHandler::constructor");
 	m_handle = connection;
 	m_directorySender = m_server->getDirectorySender();
-	m_data = (char *) xmalloc(HTTP_MAX_HEADER * sizeof(char));
-	memset(m_data, 0, HTTP_MAX_HEADER * sizeof(char));
+	m_data = (char *) xmalloc(MAX_HEADER_LENGTH * sizeof(char));
+	memset(m_data, 0, MAX_HEADER_LENGTH * sizeof(char));
 	m_parser = (http_parser*) xmalloc(sizeof(http_parser));
 	m_params = boost::shared_ptr<ParamsMap>(new ParamsMap());
 	
@@ -141,7 +66,7 @@ void ClientEventHandler::handleRead(boost::shared_ptr<IDispatcher> dispatcher)
 	if (http_parser_is_finished(m_parser)) {
 		m_request->handleRead(buffer, n);
 	} else {
-		if (m_dataLength + n >= HTTP_MAX_HEADER) {
+		if (m_dataLength + n >= MAX_HEADER_LENGTH) {
 			error("Longitud de HEADER excesiva. Cliente expulsado");
 			closeConnection(dispatcher);
 		}
