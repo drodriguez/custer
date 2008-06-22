@@ -14,7 +14,7 @@
 #  define SOCKET_ERROR -1
 #  define socketSetOpt(s,l,n,v,sz) ::setsockopt((s),(l),(n),(v),(sz))
 #  define ERROR_NUM errno
-#  include "SelectDispatcher.h"
+#  include "KQueueDispatcher.h"
 
 #elif defined(__BSD__)
 #  include <sys/event.h>
@@ -60,6 +60,7 @@
 #  define SOCKET_ERROR -1
 #  define socketSetOpt(s,l,n,v,sz) ::setsockopt((s),(l),(n),(v),(sz))
 #  define ERROR_NUM errno
+// EpollDispatcher.h no existe, SelectDispatcher.h debería funcionar en Linux
 #  include "EpollDispatcher.h"
 #else
 #  error "No hay dispatcher asociado a esta plataforma"
