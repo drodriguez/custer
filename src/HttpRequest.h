@@ -120,7 +120,7 @@ public:
 	 *
 	 * @return Si la petición está completa.
 	 */
-	bool HttpRequest::isComplete() { return m_remain <= 0; }
+	bool isComplete() { return m_remain <= 0; }
 	
 private:
 	/** Parámetros de la petición */
