@@ -6,6 +6,10 @@ if env['PLATFORM'] == 'darwin': # Mac OS X, incluimos rutas de MacPorts
 	env.Append(LIBPATH = "/opt/local/lib")
 	env.Append(CCFLAGS = '-g -Wall')
 elif env['PLATFORM'] == 'win32':
+	#
+	# Las dos líneas a continuación se deberían modificar para cada sistema
+	# con las rutas al lugar de instalación de Boost.
+	#
 	env.Append(CPPPATH = "c:\\programacion\\boost\\boost_1_35_0")
 	env.Append(LIBPATH = "c:\\programacion\\boost\\boost_1_35_0\\lib")
 	env.Append(CCFLAGS = '/MDd /Zi /EHsc')
@@ -38,6 +42,10 @@ sources = Split("""
 
 if env['PLATFORM'] == 'win32':
 	sources.append("SelectDispatcher.cpp")
+	#
+	# Los nombres de las bibliotecas Boost cambian con cada versión. Se
+	# deberán modificar por aquellos de la versión que utilicemos.
+	#
 	libs = Split("""
 		boost_system-vc80-mt-gd-1_35
 		boost_program_options-vc80-mt-gd-1_35
