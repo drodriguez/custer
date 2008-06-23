@@ -19,8 +19,8 @@
 NS_CUSTER_BEGIN
 
 /**
- * Dispatcher nativo para sistemas BSD (y Mac OS X). Utiliza kqueue como
- * sistema de E/S no bloqueante.
+ * Dispatcher para Windows y sistemas que no dipongan de una llamada al
+ * sistema de E/S no bloqueante mejor que select.
  */
 class SelectDispatcher : public IDispatcher
 {
