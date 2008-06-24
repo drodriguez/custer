@@ -85,8 +85,7 @@ boost::filesystem::path DirectorySender::canServe(std::string pathInfo)
 	// Comprobamos que esté dentro del directorio base
 	debug("requestPath: %s", requestPath.string().c_str());
 	debug("m_directory: %s", m_directory.string().c_str());
-	if (ba::starts_with(requestPath.string(), m_directory.string()) &&
-		bfs::exists(requestPath)) {
+	if (m_directory <= requestPath && bfs::exists(requestPath)) {
 		// Existe y está en una localización permitida
 		if (bfs::is_directory(requestPath)) {
 			// Piden un directorio
@@ -99,6 +98,7 @@ boost::filesystem::path DirectorySender::canServe(std::string pathInfo)
 				return requestPath;
 			} else {
 				// No servimos nada
+				debug("No servimos nada");
 				return bfs::path();
 			}
 		} else {
@@ -107,6 +107,7 @@ boost::filesystem::path DirectorySender::canServe(std::string pathInfo)
 		}
 	} else {
 		// O no existe o no es accesible.
+		debug("Archivo inexistente o inaccesible");
 		return bfs::path();
 	}
 }
